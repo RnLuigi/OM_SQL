@@ -1,21 +1,19 @@
---BASE APOIO ---- SELECT * FROM APOIO_CEDENTE
---BASE APOIO ---- SELECT * FROM APOIO_PRODUTO
---BASE APOIO ---- SELECT * FROM APOIO_CENTRAL
---BASE APOIO ---- SELECT * FROM TB_GENESYS_INTERACOES
---BASE APOIO ---- SELECT * FROM TB_CALL_MIS
---BASE APOIO ---- SELECT * FROM TB_ACD_MIS
+-- Tabelas de apoio
 
+SELECT * FROM APOIO_CEDENTE
+SELECT * FROM APOIO_PRODUTO
+SELECT * FROM APOIO_CENTRAL
+SELECT * FROM APOIO_HORA
 
+-- Tabelas Unificadas
+SELECT * FROM TB_CALL_MIS
+SELECT * FROM TB_ACD_MIS        --trocando historico
+SELECT * FROM TB_FIVE9_ACD_MIS
+SELECT * FROM TB_GENESYS_INTERACOES
 
-
-
---VIEW NOVA ----- SELECT * FROM VIEW_ATENDIMENTO_FIVE9
---VIEW NOVA ----- SELECT * FROM VIEW_ATEND_FIVE9_HR
-
---BASE APOIO ---- SELECT * FROM TB_FIVE9_ACD_MIS
---BASE APOIO ---- SELECT * FROM TB_CALL_MIS
---BASE APOIO ---- SELECT * FROM APOIO_HORA
---BASE APOIO ---- SELECT * FROM APOIO_CENTRAL
+-- Tabelas/View criadas
+SELECT * FROM VIEW_ATENDIMENTO_FIVE9
+SELECT * FROM VIEW_ATEND_FIVE9_HR
 
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -35,143 +33,155 @@ SELECT * FROM TB_FIVE9_ACD_MIS_
 
 DROP TABLE TB_FIVE9_ACD_MIS_
 
---------------------------------------------------------------------------------------------------------
---------------------------------------------------------------------------------------------------------
---------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+-- Unindo as bases TB_FIVE9_ACD_MIS e TB_CALL_MIS 
+-- Quebrando a hora em seg/min/hora (APOIO_HORA) Para a tabela TB_FIVE9_ACD_MIS
 
 DROP VIEW VIEW_ATENDIMENTO_FIVE9;
+
 CREATE VIEW VIEW_ATENDIMENTO_FIVE9 AS (
-SELECT 
-        
-CASE    WHEN A.DATA_ IS NOT NULL    THEN A.DATA_ 
-        WHEN B.DATA_ IS NOT NULL    THEN TO_DATE(B.DATA_, 'DD/MM/YY')
-    ELSE NULL   END DATA
-        
-,       A.HORA_     AS HORA_ACD
-,       HR.SEGUNDOS
-,       HR.HR
-,       HR.MIN
-,       HR.SEG
-,       HR.INTERVALO
-,       TO_CHAR(TO_DATE(B.HORA_ , 'hh24:mi:ss'), 'sssss') AS HORA_CALL_MIS
-,CASE   WHEN A.CALL_ID IS NOT NULL  THEN A.CALL_ID
-        WHEN B.CALL_ID IS NOT NULL  THEN TO_CHAR(B.CALL_ID, '9999999999')
-    ELSE NULL   END CALL_ID
+    SELECT
+    CASE    WHEN A.DATA_ IS NOT NULL            THEN A.DATA_ 
+            WHEN B.DATA_ IS NOT NULL            THEN TO_DATE(B.DATA_, 'DD/MM/YY')
+        ELSE NULL   END DATA                                                ,
+
+    A.HORA_                                             AS HORA_ACD         ,
+    HR.SEGUNDOS                                                             ,
+    HR.HR                                                                   ,
+    HR.MIN                                                                  ,
+    HR.SEG                                                                  ,
+    HR.INTERVALO                                                            ,
+    TO_CHAR(TO_DATE(B.HORA_ , 'hh24:mi:ss'), 'sssss')   AS HORA_CALL_MIS    ,
+
+    CASE    WHEN A.CALL_ID IS NOT NULL  THEN A.CALL_ID
+            WHEN B.CALL_ID IS NOT NULL  THEN TO_CHAR(B.CALL_ID, '9999999999')
+        ELSE NULL   END CALL_ID                                             ,
+
+    B.DNIS                                                                  ,
+    B.ANI                                                                   ,
+    B.CPF                                                                   ,
+    B.PROTOCOLO                                                             ,
+
+    CASE    WHEN A.CAMPANHA IS NOT NULL         THEN A.CAMPANHA             
+            WHEN B.CAMPANHA IS NOT NULL         THEN B.CAMPANHA             
+        ELSE NULL   END CAMPANHA                                            ,
+
+    CASE    WHEN A.SKILL IS NOT NULL            THEN A.SKILL
+            WHEN B.SKILL IS NOT NULL            THEN B.SKILL
+        ELSE NULL   END SKILL                                               ,
+
+    CASE    WHEN A.NOME_AGENTE IS NOT NULL      THEN A.NOME_AGENTE
+            WHEN B.NOME_AGENTE IS NOT NULL      THEN B.NOME_AGENTE
+        ELSE NULL   END NOME_AGENTE                                         ,
+
+    CASE    WHEN A.CHAM_RECEB IS NOT NULL       THEN A.CHAM_RECEB
+            WHEN B.CHAM_RECEB IS NOT NULL       THEN B.CHAM_RECEB
+        ELSE NULL   END CHAM_RECEB                                          ,
+
+    CASE    WHEN A.CHAM_ATEND IS NOT NULL       THEN A.CHAM_ATEND
+            WHEN B.CHAM_ATEND IS NOT NULL       THEN B.CHAM_ATEND
+        ELSE NULL   END CHAM_ATEND                                          ,
+
+    CASE    WHEN A.CHAM_ABAND IS NOT NULL       THEN A.CHAM_ABAND
+            WHEN B.CHAM_ABAND IS NOT NULL       THEN B.CHAM_ABAND
+        ELSE NULL   END CHAM_ABAND                                          ,
+
+    A.T_URA                                                                 ,
+    A.TME                                                                   ,
+    A.T_RESPOSTA                                                            ,
+    A.TMA                                                                   ,
+    A.T_CONSULTA                                                            ,
+    A.T_TRANSFERENCIA                                                       ,
+    A.T_ABANDONO                                                            ,
+    A.TMO                                                                   ,
+    A.T_TABULACAO                                                           ,
+    B.NOTA_CSAT                                                             ,
+    B.NOTA_NPS                                                              ,
+
+    CASE    WHEN A.CALL_TYPE IS NOT NULL        THEN A.CALL_TYPE
+            WHEN B.CALL_TYPE IS NOT NULL        THEN B.CALL_TYPE
+        ELSE NULL   END CALL_TYPE                                            
+
+ FROM TB_FIVE9_ACD_MIS A
     
-,       B.DNIS 
-,       B.ANI 
-,       B.CPF
-,       B.PROTOCOLO
+ FULL JOIN TB_CALL_MIS B
+    ON A.CALL_ID = B.CALL_ID
 
-,CASE   WHEN A.CAMPANHA IS NOT NULL         THEN A.CAMPANHA
-        WHEN B.CAMPANHA IS NOT NULL         THEN B.CAMPANHA
-    ELSE NULL   END CAMPANHA
+ LEFT JOIN APOIO_HORA HR
+    ON A.HORA_ = HR.SEGUNDOS
+)
 
-,CASE   WHEN A.SKILL IS NOT NULL            THEN A.SKILL
-        WHEN B.SKILL IS NOT NULL            THEN B.SKILL
-    ELSE NULL   END SKILL
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-,CASE   WHEN A.NOME_AGENTE IS NOT NULL      THEN A.NOME_AGENTE
-        WHEN B.NOME_AGENTE IS NOT NULL      THEN B.NOME_AGENTE
-    ELSE NULL   END NOME_AGENTE
-
-,CASE   WHEN A.CHAM_RECEB IS NOT NULL       THEN A.CHAM_RECEB
-        WHEN B.CHAM_RECEB IS NOT NULL       THEN B.CHAM_RECEB
-    ELSE NULL   END CHAM_RECEB
-
-,CASE   WHEN A.CHAM_ATEND IS NOT NULL       THEN A.CHAM_ATEND
-        WHEN B.CHAM_ATEND IS NOT NULL       THEN B.CHAM_ATEND
-    ELSE NULL   END CHAM_ATEND
-
-,CASE   WHEN A.CHAM_ABAND IS NOT NULL       THEN A.CHAM_ABAND
-        WHEN B.CHAM_ABAND IS NOT NULL       THEN B.CHAM_ABAND
-    ELSE NULL   END CHAM_ABAND
-    
-,       A.T_URA
-,       A.TME
-,       A.T_RESPOSTA
-,       A.TMA
-,       A.T_CONSULTA
-,       A.T_TRANSFERENCIA
-,       A.T_ABANDONO
-,       A.TMO
-,       A.T_TABULACAO 
-,       B.NOTA_CSAT 
-,       B.NOTA_NPS
-,CASE   WHEN A.CALL_TYPE IS NOT NULL        THEN A.CALL_TYPE
-        WHEN B.CALL_TYPE IS NOT NULL        THEN B.CALL_TYPE
-    ELSE NULL   END CALL_TYPE
-
-FROM TB_FIVE9_ACD_MIS A
-
-FULL JOIN TB_CALL_MIS B
-    ON A.CALL_ID = B.CALL_ID   
-
-LEFT JOIN APOIO_HORA HR
-    ON A.HORA_ = HR.SEGUNDOS )
-
---------------------------------------------------------------------------------------------------------
---------------------------------------------------------------------------------------------------------
---------------------------------------------------------------------------------------------------------
+-- Abertura de Hr/min/seg completo
+-- adicionado as colunas de central (APOIO_CENTRAL)
 
 DROP VIEW VIEW_ATEND_FIVE9_HR;
+
 CREATE VIEW VIEW_ATEND_FIVE9_HR AS (
-SELECT 
-        A.DATA
+    SELECT
+    A.DATA                                                                  ,
 
-,CASE   WHEN A.SEGUNDOS IS NOT NULL     THEN A.SEGUNDOS
-        WHEN HR.SEGUNDOS IS NOT NULL    THEN HR.SEGUNDOS
-    ELSE NULL   END SEGUNDOS
+    CASE    WHEN A.SEGUNDOS IS NOT NULL     THEN A.SEGUNDOS
+            WHEN HR.SEGUNDOS IS NOT NULL    THEN HR.SEGUNDOS
+        ELSE NULL   END SEGUNDOS                                            ,
 
-,CASE   WHEN A.HR IS NOT NULL           THEN A.HR
-        WHEN HR.HR IS NOT NULL          THEN HR.HR
-    ELSE NULL   END HR
+    CASE    WHEN A.HR IS NOT NULL           THEN A.HR
+            WHEN HR.HR IS NOT NULL          THEN HR.HR
+        ELSE NULL   END HR                                                  ,
 
-,CASE   WHEN A.MIN IS NOT NULL          THEN A.MIN
-        WHEN HR.MIN IS NOT NULL         THEN HR.MIN
-    ELSE NULL   END MIN  
+    CASE    WHEN A.MIN IS NOT NULL          THEN A.MIN
+            WHEN HR.MIN IS NOT NULL         THEN HR.MIN
+        ELSE NULL   END MIN                                                 ,
 
-,CASE   WHEN A.SEG IS NOT NULL          THEN A.SEG
-        WHEN HR.SEG IS NOT NULL         THEN HR.SEG
-    ELSE NULL   END SEG  
+    CASE    WHEN A.SEG IS NOT NULL          THEN A.SEG
+            WHEN HR.SEG IS NOT NULL         THEN HR.SEG
+        ELSE NULL   END SEG                                                 ,
 
-,CASE   WHEN A.INTERVALO IS NOT NULL    THEN A.INTERVALO
-        WHEN HR.INTERVALO IS NOT NULL   THEN HR.INTERVALO
-    ELSE NULL   END INTERVALO  
+    CASE    WHEN A.INTERVALO IS NOT NULL    THEN A.INTERVALO
+            WHEN HR.INTERVALO IS NOT NULL   THEN HR.INTERVALO
+        ELSE NULL   END INTERVALO                                           ,
 
-,       A.CALL_ID
-,       A.DNIS
-,       A.ANI
-,       A.CPF
-,       A.PROTOCOLO
-,       A.CAMPANHA
-,       A.SKILL
-,       CNT.CENTRAL
-,       CNT.TIPO_ATEND
-,       A.NOME_AGENTE
-,       A.CHAM_RECEB
-,       A.CHAM_ATEND
-,       A.CHAM_ABAND
-,       A.T_URA
-,       A.TME
-,       A.T_RESPOSTA
-,       A.TMA
-,       A.T_CONSULTA
-,       A.T_TRANSFERENCIA
-,       A.T_ABANDONO
-,       A.TMO
-,       A.T_TABULACAO
-,       A.NOTA_CSAT
-,       A.NOTA_NPS
-,       A.CALL_TYPE
+    A.CALL_ID
+    A.DNIS
+    A.ANI
+    A.CPF
+    A.PROTOCOLO
+    A.CAMPANHA
+    A.SKILL
+    CNT.CENTRAL
+    CNT.TIPO_ATEND
+    A.NOME_AGENTE
+    A.CHAM_RECEB
+    A.CHAM_ATEND
+    A.CHAM_ABAND
+    A.T_URA
+    A.TME
+    A.T_RESPOSTA
+    A.TMA
+    A.T_CONSULTA
+    A.T_TRANSFERENCIA
+    A.T_ABANDONO
+    A.TMO
+    A.T_TABULACAO
+    A.NOTA_CSAT
+    A.NOTA_NPS
+    A.CALL_TYPE
 
-FROM VIEW_ATENDIMENTO_FIVE9 A
+ FROM VIEW_ATENDIMENTO_FIVE9 A
 
-LEFT JOIN APOIO_HORA HR
+ LEFT JOIN APOIO_HORA HR
     ON A.HORA_CALL_MIS = HR.SEGUNDOS
 
-LEFT JOIN APOIO_CENTRAL CNT
-    ON A.SKILL = CNT.SKILL )
+ LEFT JOIN APOIO_CENTRAL CNT
+    ON A.SKILL = CNT.SKILL
+
+)
 
 --------------------------------------------------------------------------------------------------------
 --------------------------------------------------------------------------------------------------------
