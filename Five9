@@ -147,32 +147,31 @@ CREATE VIEW VIEW_ATEND_FIVE9_HR AS (
             WHEN HR.INTERVALO IS NOT NULL   THEN HR.INTERVALO
         ELSE NULL   END INTERVALO                                           ,
 
-    A.CALL_ID
-    A.DNIS
-    A.ANI
-    A.CPF
-    A.PROTOCOLO
-    A.CAMPANHA
-    A.SKILL
-    CNT.CENTRAL
-    CNT.TIPO_ATEND
-    A.NOME_AGENTE
-    A.CHAM_RECEB
-    A.CHAM_ATEND
-    A.CHAM_ABAND
-    A.T_URA
-    A.TME
-    A.T_RESPOSTA
-    A.TMA
-    A.T_CONSULTA
-    A.T_TRANSFERENCIA
-    A.T_ABANDONO
-    A.TMO
-    A.T_TABULACAO
-    A.NOTA_CSAT
-    A.NOTA_NPS
-    A.CALL_TYPE
-
+    A.CALL_ID                                                               ,
+    A.DNIS                                                                  ,
+    A.ANI                                                                   ,
+    A.CPF                                                                   ,
+    A.PROTOCOLO                                                             ,
+    A.CAMPANHA                                                              ,
+    A.SKILL                                                                 ,
+    CNT.CENTRAL                                                             ,
+    CNT.TIPO_ATEND                                                          ,
+    A.NOME_AGENTE                                                           ,
+    A.CHAM_RECEB                                                            ,
+    A.CHAM_ATEND                                                            ,
+    A.CHAM_ABAND                                                            ,
+    A.T_URA                                                                 ,
+    A.TME                                                                   ,
+    A.T_RESPOSTA                                                            ,
+    A.TMA                                                                   ,
+    A.T_CONSULTA                                                            ,
+    A.T_TRANSFERENCIA                                                       ,
+    A.T_ABANDONO                                                            ,
+    A.TMO                                                                   ,
+    A.T_TABULACAO                                                           ,
+    A.NOTA_CSAT                                                             ,
+    A.NOTA_NPS                                                              ,
+    A.CALL_TYPE                                                                   
  FROM VIEW_ATENDIMENTO_FIVE9 A
 
  LEFT JOIN APOIO_HORA HR
