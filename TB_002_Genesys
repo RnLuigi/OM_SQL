@@ -108,77 +108,77 @@ CREATE VIEW VIEW_ATENDIMENTO_F9_GNS AS (
                 WHEN A.CONVERSATION_ID IS NOT NULL AND A.TMA IS NULL    THEN 1
             ELSE 0      END CHAMADA_ABANDONADA                  ,
 
+        CASE    WHEN A.TMA IS NOT NULL                                  THEN TO_CHAR(A.TMA, '99999')
+                WHEN B.TMO IS NOT NULL                                  THEN TO_CHAR(B.TMO, '99999')
+            ELSE NULL   END TMO                                 ,
 
+        B.TMA                                                   ,
+
+        CASE    WHEN A.TME IS NOT NULL                                  THEN TO_CHAR(A.TME, '99999')
+                WHEN B.TME IS NOT NULL                                  THEN TO_CHAR(B.TME, '99999')
+            ELSE NULL   END TME                                 ,
+
+        A.TEMPO_ACW                                 AS T_ACW    ,
+
+        CASE    WHEN A.NPS IS NOT NULL                                  THEN TO_CHAR(A.NPS, '99999')
+                WHEN B.NOTA_NPS IS NOT NULL                             THEN TO_CHAR(B.NOTA_NPS, '99999')
+            ELSE NULL   END NPS                                 ,
+
+        CASE    WHEN A.CSAT IS NOT NULL                                 THEN TO_CHAR(A.CSAT, '99999')
+                WHEN B.NOTA_CSAT IS NOT NULL                            THEN TO_CHAR(B.NOTA_CSAT, '99999')
+            ELSE NULL   END CSAT                                ,
+
+        A.ANALISTA_PESQ_REGULATORIO                             ,        
+        A.PESQUISA_REGULATORIO                                  ,
+
+        CASE    WHEN A.DIRECAO IS NOT NULL                              THEN A.DIRECAO
+                WHEN B.CALL_TYPE IS NOT NULL                            THEN B.CALL_TYPE
+            ELSE NULL   END DIRECAO                             ,
+
+        A.TRANSFERENCIA_DIRETA_S_N                  AS TRANSF_DIRETA_S_N    ,
+        A.TRANSFERENCIAS                            AS TRANSFERENCIA        ,
+        A.TIPO_DESCONEXAO                           AS TIPO_DESCONEXAO      ,
+
+        CASE    WHEN A.USUARIO_ATEND_1 IS NOT NULL                      THEN A.USUARIO_ATEND_1
+                WHEN B.NOME_AGENTE IS NOT NULL                          THEN B.NOME_AGENTE
+            ELSE NULL    END OPERADOR                           ,
+
+        NVL (A.USUARIO_ATEND_10, 
+            NVL (A.USUARIO_ATEND_9, 
+                NVL (A.USUARIO_ATEND_8, 
+                    NVL (A.USUARIO_ATEND_7, 
+                        NVL (A.USUARIO_ATEND_6, 
+                            NVL (USUARIO_ATEND_5
+                                NVL (A.USUARIO_ATEND_4, 
+                                    NVL (A.USUARIO_ATEND_3, 
+                                        NVL (A.USUARIO_ATEND_2, NULL))))))))) OPERADOR_TRANSF_1,
+
+        NVL2 (A.USUARIO_ATEND_9, A.USUARIO_ATEND_8, 
+            NVL2 (A.USUARIO_ATEND_8, A.USUARIO_ATEND_7, 
+                NVL2 (A.USUARIO_ATEND_7, A.USUARIO_ATEND_6, 
+                    NVL2 (A.USUARIO_ATEND_6, A.USUARIO_ATEND_5
+                        NVL2 (A.USUARIO_ATEND_5, A.USUARIO_ATEND_4, 
+                            NVL2 (A.USUARIO_ATEND_4, A.USUARIO_ATEND_3, 
+                                NVL2 (A.USUARIO_ATEND_3, A.USUARIO_ATEND_2, NULL))))))) OPERADOR_TRANSF_2,
+
+        A.FLUXO_URA                                             ,
+        A.ULTIMA_FINALIZACAO                                    ,
+        A.SERVICO                                               ,
+        A.TABULACAO_RETORNO                                     ,
+        A.ORIGEM_CHAMADA                                        ,
+        A.ULTIMA_FILA                                           ,
+        A.WRAP_UP                                               ,
+
+    FROM TB_GENESYS_INTERACOES A
+
+    FULL JOIN VIEW_ATEND_FIVE9_HR B
+        ON A.CONVERSATION_ID = B.CALL_ID
+
+    LEFT JOIN APOIO_HORA HR
+        ON CAST(A.HORA_INICIO AS INT) = HR.SEGUNDOS
+
+    LEFT JOIN APOIO_CENTRAL CNT
+        ON A.FILA_1 = CNT.SKILL
 )
 
-
-
-
-,CASE   WHEN A.TMA IS NOT NULL                  THEN TO_CHAR(A.TMA, '99999')
-        WHEN B.TMO IS NOT NULL                  THEN TO_CHAR(B.TMO, '99999')
-    ELSE NULL   END TMO 
-,        B.TMA
-
-,CASE   WHEN A.TME IS NOT NULL                  THEN TO_CHAR(A.TME, '99999')
-        WHEN B.TME IS NOT NULL                  THEN TO_CHAR(B.TME, '99999')
-    ELSE NULL   END TME
-
-,       A.TEMPO_ACW                             AS T_ACW
-
-,CASE   WHEN A.NPS IS NOT NULL                  THEN TO_CHAR(A.NPS, '99999')
-        WHEN B.NOTA_NPS IS NOT NULL             THEN TO_CHAR(B.NOTA_NPS, '99999')
-    ELSE NULL   END NPS
-
-,CASE   WHEN A.CSAT IS NOT NULL                 THEN TO_CHAR(A.CSAT, '99999')
-        WHEN B.NOTA_CSAT IS NOT NULL            THEN TO_CHAR(B.NOTA_CSAT, '99999')
-    ELSE NULL   END CSAT
-
-,       A.ANALISTA_PESQ_REGULATORIO
-,       A.PESQUISA_REGULATORIO
-    
-,CASE   WHEN A.DIRECAO IS NOT NULL              THEN A.DIRECAO
-        WHEN B.CALL_TYPE IS NOT NULL            THEN B.CALL_TYPE
-    ELSE NULL   END DIRECAO
-
-,       A.TRANSFERENCIA_DIRETA_S_N              AS TRANSF_DIRETA_S_N
-,       A.TRANSFERENCIAS                        AS TRANSFERENCIA
-,       A.TIPO_DESCONEXAO                       AS TIPO_DESCONEXAO
-
-,CASE   WHEN A.USUARIO_ATEND_1 IS NOT NULL      THEN A.USUARIO_ATEND_1
-        WHEN B.NOME_AGENTE IS NOT NULL          THEN B.NOME_AGENTE
-    ELSE NULL    END OPERADOR
-
-,NVL  (A.USUARIO_ATEND_10, NVL (A.USUARIO_ATEND_9, NVL (A.USUARIO_ATEND_8, NVL (A.USUARIO_ATEND_7, NVL (A.USUARIO_ATEND_6, NVL (USUARIO_ATEND_5
-,NVL (A.USUARIO_ATEND_4, NVL (A.USUARIO_ATEND_3, NVL (A.USUARIO_ATEND_2, NULL))))))))) OPERADOR_TRANSF_1
-
-,NVL2 (A.USUARIO_ATEND_9, A.USUARIO_ATEND_8, NVL2 (A.USUARIO_ATEND_8, A.USUARIO_ATEND_7, NVL2 (A.USUARIO_ATEND_7, A.USUARIO_ATEND_6, NVL2 (A.USUARIO_ATEND_6, A.USUARIO_ATEND_5
-,NVL2 (A.USUARIO_ATEND_5, A.USUARIO_ATEND_4, NVL2 (A.USUARIO_ATEND_4, A.USUARIO_ATEND_3, NVL2 (A.USUARIO_ATEND_3, A.USUARIO_ATEND_2, NULL))))))) OPERADOR_TRANSF_2
-
-,       A.FLUXO_URA
-,       A.ULTIMA_FINALIZACAO
-,       A.SERVICO
-,       A.TABULACAO_RETORNO
-,       A.ORIGEM_CHAMADA
-,       A.ULTIMA_FILA
-,       A.WRAP_UP
-
-
-
-FROM TB_GENESYS_INTERACOES A
-
-FULL JOIN VIEW_ATEND_FIVE9_HR B
-    ON A.CONVERSATION_ID = B.CALL_ID
-
-LEFT JOIN APOIO_HORA HR
-    ON CAST(A.HORA_INICIO AS INT) = HR.SEGUNDOS
-
-LEFT JOIN APOIO_CENTRAL CNT
-    ON A.FILA_1 = CNT.SKILL )
-    
-
-
-
-    
-
-    
 
