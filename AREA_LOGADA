@@ -1,48 +1,60 @@
+-- Tabelas de Apoio
 
+SELECT * FROM APOIO_HORA
 
+-- Tabelas Unificadas
 
+SELECT * FROM VIEW_AREA_LOG_DT
 
+-- Tabelas/View criadas
 
+SELECT * FROM VIEW_AREA_LOGADA
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 DROP VIEW VIEW_AREA_LOG_DT;
+
 CREATE VIEW VIEW_AREA_LOG_DT AS (
-SELECT 
-            TO_CHAR(TO_DATE(A.DATA, 'DD/MM/YY'),'DD/MM/YYYY') AS DATA                       ,
-            TO_CHAR(A.HORA, 'HH24:MI:SS') AS HORA                                           ,
-            B.SEGUNDOS                                                                      ,
-            B.INTERVALO                                                                     ,
-            (TRANSLATE(A.CONTRATO,'.-/ºabcdefghijlmnopqrstuvxz ',' ')) AS CONTRATO          ,
-            A.CPF                                                                           ,
-            A.CODIGO_CLIENTE                                                                , 
-            A.MODULO                                                                        ,
-            A.DESCRICAO_MODULO                                                              , 
-            A.PROCEDIMENTO
-        FROM portal_estatistica@dw A
-    
-        
-        LEFT JOIN APOIO_HORA B
-        ON      (TO_CHAR(A.HORA, 'HH24') *60*60) +
+    SELECT        
+        TO_CHAR(TO_DATE(A.DATA, 'DD/MM/YY'),'DD/MM/YYYY')               AS DATA              ,
+        TO_CHAR(A.HORA, 'HH24:MI:SS')                                   AS HORA              ,
+        B.SEGUNDOS                                                                           ,
+        B.INTERVALO                                                                          ,
+        TRANSLATE(A.CONTRATO,'.-/ºabcdefghijlmnopqrstuvxz ',' ')        AS CONTRATO          ,
+        A.CPF                                                                                ,
+        A.CODIGO_CLIENTE                                                                     , 
+        A.MODULO                                                                             ,
+        A.DESCRICAO_MODULO                                                                   , 
+        A.PROCEDIMENTO  
+     FROM PORTAL_ESTATISTICA@dw A
+
+ LEFT JOIN APOIO_HORA B
+      ON        (TO_CHAR(A.HORA, 'HH24') *60*60) +
                 (TO_CHAR(A.HORA, 'MI') *60) +
                 (TO_CHAR(A.HORA, 'SS') )
                 = B.SEGUNDOS
-        WHERE A.DATA BETWEEN To_Date ('01/01/2021','dd/mm/yyyy') AND To_Date ('31/12/2023','dd/mm/yyyy')
-        )
-       
-       
-SELECT * FROM VIEW_AREA_LOGADA
 
+ WHERE A.DATA BETWEEN TO_DATE ('01/01/2021','dd/mm/yyyy') AND TO_DATE ('31/12/2023','dd/mm/yyyy')
+
+
+)
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 CREATE VIEW VIEW_AREA_LOGADA AS (
-SELECT 
+     SELECT 
+        DATA                                                                              ,
+        MODULO                                                                            ,
+        PROCEDIMENTO                                                                      ,
+        COUNT (*) AS COUNT
+     FROM VIEW_AREA_LOG_DT
 
-DATA,
-MODULO,
-PROCEDIMENTO,
-COUNT (*) AS COUNT
-
-FROM VIEW_AREA_LOG_DT
-
-GROUP BY 
-    DATA,
-    MODULO,
-    PROCEDIMENTO )
+     GROUP BY 
+          DATA,
+          MODULO,
+          PROCEDIMENTO 
+)
