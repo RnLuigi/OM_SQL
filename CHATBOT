@@ -1,73 +1,91 @@
--- CHATBOT
+-- Tabelas de Apoio
 
+SELECT * FROM APOIO_HORA
+
+-- Tabelas Unificadas
+
+SELECT * FROM VW_CHABOT_ENCERRAR
+
+-- Tabelas/View criadas
+
+SELECT * FROM VIEW_CBOT_GERAL
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --CRIAR VIEW PARA IDENTIFICAR A TRANSFERENCIA/RETENCAO/ABANDONO
 --MEXER APENAS SE NECESSARIO ALGUMA MANUTENÇÃO NAS REGRAS
-/*
-DROP VIEW VW_CHABOT_ENCERRAR;
-    CREATE VIEW VW_CHABOT_ENCERRAR AS (
-        SELECT 
-            CHATBOT.CONVERSATION_ID, 
-            NVL (TB_TRANS.FLAG, 0) FLAG_TRANS, 
-            NVL (TB_RETEN.FLAG, 0) FLAG_RETEN,
-                CASE 
-                    WHEN TB_TRANS.FLAG IS NULL AND TB_RETEN.FLAG IS NULL THEN 1 
-                    ELSE 0 
-                END FLAG_ABANDONO
-        FROM wsautoatendimentoparceiro.chatbot_conversation@dw CHATBOT
-        LEFT JOIN
-        (SELECT
-            CONVERSATION_ID, 1 FLAG
-        FROM wsautoatendimentoparceiro.chatbot_message@dw
-        WHERE   INPUT LIKE '%FINISHED SERVICE%'
-                OR INPUT LIKE '%Falar com Atendente%'
-                OR INPUT = 'falar'
-                OR OUTPUT LIKE '%aguarde que eu vou encaminhar esta conversa para um atendente Omni%'
-                OR OUTPUT LIKE '%Vou te transferir para um Atendente%'
 
-) TB_TRANS
-        ON CHATBOT.CONVERSATION_ID = TB_TRANS.CONVERSATION_ID
-        LEFT JOIN 
-        (SELECT
-            CONVERSATION_ID, 1 FLAG
-        FROM wsautoatendimentoparceiro.chatbot_meSSage@dw
-        WHERE INPUT LIKE '%Encerrar conversa%' ) TB_RETEN
-        ON CHATBOT.CONVERSATION_ID = TB_RETEN.CONVERSATION_ID )
-*/
-            
+DROP VIEW VW_CHABOT_ENCERRAR;
+
+CREATE VIEW VW_CHABOT_ENCERRAR AS (
+     SELECT 
+          CHATBOT.CONVERSATION_ID                                               , 
+          NVL (TB_TRANS.FLAG, 0) FLAG_TRANS                                     , 
+          NVL (TB_RETEN.FLAG, 0) FLAG_RETEN                                     ,
+
+          CASE  WHEN TB_TRANS.FLAG IS NULL 
+                        AND TB_RETEN.FLAG IS NULL THEN 1
+               ELSE 0     END FLAG_ABANDONO
+     FROM wsautoatendimentoparceiro.chatbot_conversation@dw CHATBOT
+     LEFT JOIN
+          (SELECT
+               CONVERSATION_ID, 1 FLAG
+           FROM wsautoatendimentoparceiro.chatbot_message@dw
+
+           WHERE INPUT LIKE '%FINISHED SERVICE%'
+                 OR INPUT LIKE '%Falar com Atendente%'
+                 OR INPUT = 'falar'
+                 OR OUTPUT LIKE '%aguarde que eu vou encaminhar esta conversa para um atendente Omni%'
+                 OR OUTPUT LIKE '%Vou te transferir para um Atendente%'
+          ) TB_TRANS
+                ON CHATBOT.CONVERSATION_ID = TB_TRANS.CONVERSATION_ID
+     LEFT JOIN 
+          (SELECT
+               CONVERSATION_ID, 1 FLAG
+           FROM wsautoatendimentoparceiro.chatbot_meSSage@dw
+
+           WHERE INPUT LIKE '%Encerrar conversa%' 
+          ) TB_RETEN
+                ON CHATBOT.CONVERSATION_ID = TB_RETEN.CONVERSATION_ID 
+)
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------   
 
 --CRIAR BASE PARA DADOS DE DO CHATBOT
 --EXECUTAR APENAS EM VIRADA DE MES, AJUSTANDO AS DATAS
 
-DROP TABLE TB_CBOT_RESUMO_MES;
-CREATE TABLE TB_CBOT_RESUMO_MES AS (
+TB_CBOT_RESUMO_MES
 
-SELECT 
 
-       A.CONVERSATION_ID,
-       A.START_DATE,
-       A.END_DATE,
-       A.ATENDIMENTO,
-       B.NPS,
-       C.CSAT,
-       D.CPF,
-       E.PRODUTO,
-       F.NAO_CLIENTE,
-       G.RETENCAO,
-       H.ENCERRAR_ATEND
+DROP TABLE VIEW_CBOT_GERAL;
 
-FROM -------------------------------------------------------------------------------------------------------------------------
-     (SELECT DISTINCT
-             CONVERSATION_ID,
-             START_DATE,
-             END_DATE,
-             CASE WHEN REGEXP_LIKE(CONVERSATION_ID, '^\d{8}_55\d{10,11}+$','m') THEN 'WHATSAPP' ELSE 'CHATBOT' END ATENDIMENTO
-      FROM wsautoatendimentoparceiro.chatbot_conversation@dw
--- ATUALIZA PARA DADOS DO MES ATUAL      
-      WHERE START_DATE BETWEEN To_Date('01/01/2021 00:00:00', 'DD/MM/YYYY HH24:MI:SS') AND To_Date('31/12/2023 23:59:59', 'DD/MM/YYYY HH24:MI:SS')
--- ATUALIZA HISTORICO DO ANO
---      WHERE START_DATE BETWEEN To_Date('01/01/2022 00:00:00', 'DD/MM/YYYY HH24:MI:SS') AND To_Date('31/07/2022 23:59:59', 'DD/MM/YYYY HH24:MI:SS')
-     ) A,
+CREATE TABLE VIEW_CBOT_GERAL AS (
+     SELECT 
+          A.CONVERSATION_ID,
+          A.START_DATE,
+          A.END_DATE,
+          A.ATENDIMENTO,
+          B.NPS,
+          C.CSAT,
+          D.CPF,
+          E.PRODUTO,
+          F.NAO_CLIENTE,
+          G.RETENCAO,
+          H.ENCERRAR_ATEND
+     FROM 
+          (SELECT DISTINCT
+               CONVERSATION_ID,
+               START_DATE,
+               END_DATE,
+               CASE     WHEN REGEXP_LIKE(CONVERSATION_ID, '^\d{8}_55\d{10,11}+$','m') THEN 'WHATSAPP' 
+                    ELSE 'CHATBOT' END ATENDIMENTO
+          FROM wsautoatendimentoparceiro.chatbot_conversation@dw
+           WHERE START_DATE BETWEEN To_Date('01/01/2021 00:00:00', 'DD/MM/YYYY HH24:MI:SS') AND To_Date('31/12/2023 23:59:59', 'DD/MM/YYYY HH24:MI:SS')
+          ) A,
      -------------------------------------------------------------------------------------------------------------------------
      (SELECT DISTINCT
              CONVERSATION_ID,
