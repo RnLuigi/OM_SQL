@@ -1,232 +1,186 @@
+-- Tabelas de Apoio
 
+SELECT * FROM APOIO_CENTRAL
+SELECT * FROM TB_CES_2N
+SELECT * FROM TB_CES_CHAT
+SELECT * FROM TB_PESQ_CHAT_2022
 
-DROP VIEW VIEW_BASE_PROTOCOLOS
+-- Tabelas Unificadas
+
+SELECT * FROM VIEW_ATEND_FIVE9_HR
+SELECT * FROM TB_GENESYS_INTERACOES
+
+-- Tabelas/View criadas
+
+SELECT * FROM VIEW_ATENDIMENTO_F9_GNS
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--EXECUTAR PARA INSERIR NOVOS DADOS NA BASE
+DELETE FROM TB_PESQ_CHAT_2022
+WHERE DATA LIKE '%10/2022%'
+
+DROP TABLE TB_PESQ_CHAT_MES
+
+INSERT INTO TB_PESQ_CHAT_2022 (
+DATA, CONTRATO, PROTOCOLO, CPF, PROPRIETARIO, PRODUTO_CONTRATO, CENTRAL, PRODUTO, CSAT, NPS, PESQ_ATEND )
+SELECT * FROM TB_PESQ_CHAT_MES 
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
 CREATE VIEW VIEW_BASE_PROTOCOLOS AS (
     SELECT 
-------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------
---COLUNAS CHAVE
+    --COLUNAS CHAVE
+    CASE    WHEN SF.DATA_REF IS NOT NULL                            THEN SF.DATA_REF
+            WHEN CES2N."DATA" IS NOT NULL                           THEN CES2N."DATA"
+            WHEN CESCHAT."DATA" IS NOT NULL                         THEN CESCHAT."DATA"
+            WHEN PESQCHAT."DATA" IS NOT NULL                        THEN PESQCHAT."DATA"    
+            WHEN ATENDCHAT."DATA" IS NOT NULL                       THEN ATENDCHAT."DATA"    
+            WHEN TRIGG.DATA_INICIO IS NOT NULL                      THEN TO_CHAR(TO_DATE(TRIGG.DATA_INICIO, 'DD/MM/YY'),'DD/MM/YYYY')
+        ELSE NULL   END DATA                                                ,
+    
+    SF."DATA/HORA DE ABERTURA"                  AS SF_DATA_HR_ABERTURA      ,
+    SF."DATA/HORA DE FECHAMENTO"                AS SF_DATA_HR_FECHAMENTO    ,
 
-CASE
-    WHEN    SF.DATA_REF IS NOT NULL                     THEN SF.DATA_REF
-    WHEN    CES2N."DATA" IS NOT NULL                    THEN CES2N."DATA"
-    WHEN    CESCHAT."DATA" IS NOT NULL                  THEN CESCHAT."DATA"
-    WHEN    PESQCHAT."DATA" IS NOT NULL                 THEN PESQCHAT."DATA"    
-    WHEN    ATENDCHAT."DATA" IS NOT NULL                THEN ATENDCHAT."DATA"    
-    WHEN    TRIGG.DATA_INICIO IS NOT NULL               THEN TO_CHAR(TO_DATE(TRIGG.DATA_INICIO, 'DD/MM/YY'),'DD/MM/YYYY')
-    ELSE NULL
-END DATA
+    CASE    WHEN SF."NUMERO DO PROTOCOLO" IS NOT NULL               THEN SF."NUMERO DO PROTOCOLO"
+            WHEN CES2N.PROTOCOLO IS NOT NULL                        THEN CES2N.PROTOCOLO
+            WHEN CESCHAT.PROTOCOLO IS NOT NULL                      THEN CESCHAT.PROTOCOLO
+            WHEN PESQCHAT.PROTOCOLO IS NOT NULL                     THEN PESQCHAT.PROTOCOLO
+            WHEN ATENDCHAT.PROTOCOLO IS NOT NULL                    THEN ATENDCHAT.PROTOCOLO
+            WHEN TRIGG."Número do atendimento" IS NOT NULL          THEN TRIGG."Número do atendimento"
+        ELSE NULL   END PROTOCOLO                                           ,
 
-,CASE
-    WHEN    SF."NUMERO DO PROTOCOLO" IS NOT NULL        THEN SF."NUMERO DO PROTOCOLO"
-    WHEN    CES2N.PROTOCOLO IS NOT NULL                 THEN CES2N.PROTOCOLO
-    WHEN    CESCHAT.PROTOCOLO IS NOT NULL               THEN CESCHAT.PROTOCOLO
-    WHEN    PESQCHAT.PROTOCOLO IS NOT NULL              THEN PESQCHAT.PROTOCOLO
-    WHEN    ATENDCHAT.PROTOCOLO IS NOT NULL             THEN ATENDCHAT.PROTOCOLO
-    WHEN    TRIGG."Número do atendimento" IS NOT NULL   THEN TRIGG."Número do atendimento"
-    ELSE NULL
-END PROTOCOLO
+    CASE    WHEN SF.CONTRATO IS NOT NULL                            THEN SF.CONTRATO
+            WHEN CES2N.CONTRATO IS NOT NULL                         THEN CES2N.CONTRATO
+            WHEN CESCHAT.CONTRATO IS NOT NULL                       THEN CESCHAT.CONTRATO 
+            WHEN PESQCHAT.CONTRATO IS NOT NULL                      THEN PESQCHAT.CONTRATO    
+        ELSE NULL   END CONTRATO                                            ,
 
-,CASE
-    WHEN    SF.CONTRATO IS NOT NULL                     THEN SF.CONTRATO
-    WHEN    CES2N.CONTRATO IS NOT NULL                  THEN CES2N.CONTRATO
-    WHEN    CESCHAT.CONTRATO IS NOT NULL                THEN CESCHAT.CONTRATO 
-    WHEN    PESQCHAT.CONTRATO IS NOT NULL               THEN PESQCHAT.CONTRATO    
-    ELSE NULL
-END CONTRATO
+    CASE    WHEN SF."NOME DA CONTA CPF" IS NOT NULL                 THEN REPLACE(REPLACE(SF."NOME DA CONTA CPF",'.',''),'-','')
+            WHEN SF.CPF IS NOT NULL                                 THEN REPLACE(REPLACE(SF.CPF,'.',''),'-','')
+            WHEN TRIGG."CPF/CNPJ" IS NOT NULL                       THEN TRIGG."CPF/CNPJ"
+        ELSE NULL   END CPF                                                 ,
 
-,CASE
-    WHEN    SF."NOME DA CONTA CPF" IS NOT NULL          THEN REPLACE(REPLACE(SF."NOME DA CONTA CPF",'.',''),'-','')
-    WHEN    SF.CPF IS NOT NULL                          THEN REPLACE(REPLACE(SF.CPF,'.',''),'-','')
-    WHEN    TRIGG."CPF/CNPJ" IS NOT NULL                THEN TRIGG."CPF/CNPJ"
-    ELSE NULL
-END CPF
+    CASE    WHEN SF.CEDENTE IS NOT NULL                             THEN UPPER (SF.CEDENTE)
+            WHEN CES2N.CEDENTE IS NOT NULL                          THEN UPPER (CES2N.CEDENTE)
+            WHEN CESCHAT.CEDENTE IS NOT NULL                        THEN UPPER (CESCHAT.CEDENTE)
+            WHEN TRIGG."Número do atendimento" IS NOT NULL          THEN 'TRIGG'
+        ELSE NULL   END CEDENTE                                             ,
 
-,CASE
-    WHEN    SF.CEDENTE IS NOT NULL                      THEN UPPER (SF.CEDENTE)
-    WHEN    CES2N.CEDENTE IS NOT NULL                   THEN UPPER (CES2N.CEDENTE)
-    WHEN    CESCHAT.CEDENTE IS NOT NULL                 THEN UPPER (CESCHAT.CEDENTE)
-    WHEN    TRIGG."Número do atendimento" IS NOT NULL   THEN 'TRIGG'
-    ELSE NULL
-END CEDENTE
+    CASE    WHEN SF.PRODUTO IS NOT NULL                             THEN UPPER (SF.PRODUTO)
+            WHEN CES2N.PRODUTO IS NOT NULL                          THEN UPPER (CES2N.PRODUTO)
+            WHEN CESCHAT.PRODUTO IS NOT NULL                        THEN UPPER (CESCHAT.PRODUTO)
+            WHEN PESQCHAT.PRODUTO IS NOT NULL                       THEN UPPER (PESQCHAT.PRODUTO)
+            WHEN TRIGG."Grupo de assunto" IS NOT NULL               THEN UPPER (TRIGG."Grupo de assunto")
+        ELSE '-'    END PRODUTO                                             ,
 
-,CASE
-    WHEN    SF.PRODUTO IS NOT NULL                      THEN UPPER (SF.PRODUTO)
-    WHEN    CES2N.PRODUTO IS NOT NULL                   THEN UPPER (CES2N.PRODUTO)
-    WHEN    CESCHAT.PRODUTO IS NOT NULL                 THEN UPPER (CESCHAT.PRODUTO)
-    WHEN    PESQCHAT.PRODUTO IS NOT NULL                THEN UPPER (PESQCHAT.PRODUTO)
-    WHEN    TRIGG."Grupo de assunto" IS NOT NULL        THEN UPPER (TRIGG."Grupo de assunto")
-    ELSE '-'
-END PRODUTO
+    CASE    WHEN SF."PRODUTO DO CONTRATO" IS NOT NULL               THEN UPPER (SF."PRODUTO DO CONTRATO")
+            WHEN CES2N.PRODUTO_CONTRATO IS NOT NULL                 THEN UPPER (CES2N.PRODUTO_CONTRATO)
+            WHEN CESCHAT.PRODUTO_CONTRATO IS NOT NULL               THEN UPPER (CESCHAT.PRODUTO_CONTRATO)
+            WHEN PESQCHAT.PRODUTO_CONTRATO IS NOT NULL              THEN UPPER (PESQCHAT.PRODUTO_CONTRATO)
+            WHEN TRIGG."Assunto" IS NOT NULL                        THEN UPPER (TRIGG."Assunto")
+        ELSE '-'    END PRODUTO_CONTRATO                                    ,
 
-,CASE
-    WHEN    SF."PRODUTO DO CONTRATO" IS NOT NULL        THEN UPPER (SF."PRODUTO DO CONTRATO")
-    WHEN    CES2N.PRODUTO_CONTRATO IS NOT NULL          THEN UPPER (CES2N.PRODUTO_CONTRATO)
-    WHEN    CESCHAT.PRODUTO_CONTRATO IS NOT NULL        THEN UPPER (CESCHAT.PRODUTO_CONTRATO)
-    WHEN    PESQCHAT.PRODUTO_CONTRATO IS NOT NULL       THEN UPPER (PESQCHAT.PRODUTO_CONTRATO)
-    WHEN    TRIGG."Assunto" IS NOT NULL                 THEN UPPER (TRIGG."Assunto")
-    ELSE '-'
-END PRODUTO_CONTRATO
+    CASE    WHEN SF.TIPO IS NOT NULL                                THEN UPPER (SF.TIPO)
+            WHEN CES2N.TIPO IS NOT NULL                             THEN UPPER (CES2N.TIPO)
+            WHEN CESCHAT.TIPO IS NOT NULL                           THEN UPPER (CESCHAT.TIPO)
+            WHEN ATENDCHAT.TIPO IS NOT NULL                         THEN UPPER (ATENDCHAT.TIPO)
+            WHEN TRIGG."Tipo de ocorrência" IS NOT NULL             THEN UPPER (TRIGG."Tipo de ocorrência")
+        ELSE NULL   END TIPO                                                ,
 
-,CASE
-    WHEN    SF.TIPO IS NOT NULL                         THEN UPPER (SF.TIPO)
-    WHEN    CES2N.TIPO IS NOT NULL                      THEN UPPER (CES2N.TIPO)
-    WHEN    CESCHAT.TIPO IS NOT NULL                    THEN UPPER (CESCHAT.TIPO)
-    WHEN    ATENDCHAT.TIPO IS NOT NULL                  THEN UPPER (ATENDCHAT.TIPO)
-    WHEN    TRIGG."Tipo de ocorrência" IS NOT NULL      THEN UPPER (TRIGG."Tipo de ocorrência")
-    ELSE NULL
-END TIPO
+    CASE    WHEN SF.MOTIVO IS NOT NULL                               THEN UPPER (SF.MOTIVO)
+            WHEN CES2N.MOTIVO IS NOT NULL                            THEN UPPER (CES2N.MOTIVO)
+            WHEN CESCHAT.MOTIVO IS NOT NULL                          THEN UPPER (CESCHAT.MOTIVO)
+            WHEN ATENDCHAT.MOTIVO IS NOT NULL                        THEN UPPER (ATENDCHAT.MOTIVO)
+            WHEN TRIGG."Grupo de tipo de ocorrência" IS NOT NULL     THEN UPPER (TRIGG."Grupo de tipo de ocorrência")
+        ELSE NULL   END MOTIVO                                              ,
 
-,CASE
-    WHEN    SF.MOTIVO IS NOT NULL                               THEN UPPER (SF.MOTIVO)
-    WHEN    CES2N.MOTIVO IS NOT NULL                            THEN UPPER (CES2N.MOTIVO)
-    WHEN    CESCHAT.MOTIVO IS NOT NULL                          THEN UPPER (CESCHAT.MOTIVO)
-    WHEN    ATENDCHAT.MOTIVO IS NOT NULL                        THEN UPPER (ATENDCHAT.MOTIVO)
-    WHEN    TRIGG."Grupo de tipo de ocorrência" IS NOT NULL     THEN UPPER (TRIGG."Grupo de tipo de ocorrência")
-    ELSE NULL
-END MOTIVO
+    CASE    WHEN SF."SUB-MOTIVO" IS NOT NULL                        THEN UPPER (SF."SUB-MOTIVO")
+            WHEN CES2N.SUBMOTIVO IS NOT NULL                        THEN UPPER (CES2N.SUBMOTIVO)
+            WHEN CESCHAT.SUBMOTIVO IS NOT NULL                      THEN UPPER (CESCHAT.SUBMOTIVO)  
+            WHEN ATENDCHAT.SUBMOTIVO IS NOT NULL                    THEN UPPER (ATENDCHAT.SUBMOTIVO)
+            WHEN TRIGG."Ocorrência" IS NOT NULL                     THEN UPPER (TRIGG."Ocorrência")
+        ELSE NULL   END SUBMOTIVO                                           ,
 
-,CASE
-    WHEN    SF."SUB-MOTIVO" IS NOT NULL                 THEN UPPER (SF."SUB-MOTIVO")
-    WHEN    CES2N.SUBMOTIVO IS NOT NULL                 THEN UPPER (CES2N.SUBMOTIVO)
-    WHEN    CESCHAT.SUBMOTIVO IS NOT NULL               THEN UPPER (CESCHAT.SUBMOTIVO)  
-    WHEN    ATENDCHAT.SUBMOTIVO IS NOT NULL             THEN UPPER (ATENDCHAT.SUBMOTIVO)
-    WHEN    TRIGG."Ocorrência" IS NOT NULL              THEN UPPER (TRIGG."Ocorrência")
-    ELSE NULL
-END SUBMOTIVO
+    CASE    WHEN ATENDCHAT.SERVICO = 'SACCentralRelacionamentoChatBot'       THEN 'CHATBOT FINANCEIRA'
+            WHEN ATENDCHAT.SERVICO = 'SACCentralRelacionamento'              THEN 'CHAT FINANCEIRA'
+            WHEN ATENDCHAT.SERVICO = 'WhatsAppSacCentraldeRelacionamento'    THEN 'WHATSAPP FINANCEIRA'
+            WHEN ATENDCHAT.SERVICO = 'BancoChat'                             THEN 'CHAT NEGOCIOS DIGITAIS'
+            WHEN ATENDCHAT.SERVICO = 'WhatsappBanco'                         THEN 'WHATSAPP NEGOCIOS DIGITAIS'
+            WHEN ATENDCHAT.SERVICO = 'WhatsAppNegociacao'                    THEN 'WHATSAPP CENTRAL NEGOCIAÇÃO'
+            WHEN ATENDCHAT.SERVICO = 'CentralNegociacao'                     THEN 'CHAT CENTRAL NEGOCIAÇÃO'
+            WHEN ATENDCHAT.SERVICO = 'CentralNegociacaoChatBot'              THEN 'CHATBOT CENTRAL NEGOCIAÇÃO'
+            WHEN ATENDCHAT.SERVICO = 'WhatsappChatBot'                       THEN 'WHATSAPP CHATBOT'
+            WHEN ATENDCHAT.SERVICO = 'WhatsApp2nivel'                        THEN 'AVALIAR'
+            WHEN CES2N.PROTOCOLO IS NOT NULL                                 THEN '2 NIVEL'
+            WHEN CESCHAT.PROTOCOLO IS NOT NULL                               THEN 'CHAT'
+            WHEN PESQCHAT.PROTOCOLO IS NOT NULL                              THEN 'CHAT'
+            WHEN TRIGG."Forma de contato" IS NOT NULL                        THEN 'TRIGG'
+            WHEN SF."PROPRIETARIO PROTOCOLO" LIKE '%2 ° Nível%'              THEN '2 NIVEL'
+        ELSE NULL   END OPERACAO                                            ,
 
-,CASE
-    WHEN    ATENDCHAT.SERVICO = 'SACCentralRelacionamentoChatBot'       THEN 'CHATBOT FINANCEIRA'
-    WHEN    ATENDCHAT.SERVICO = 'SACCentralRelacionamento'              THEN 'CHAT FINANCEIRA'
-    WHEN    ATENDCHAT.SERVICO = 'WhatsAppSacCentraldeRelacionamento'    THEN 'WHATSAPP FINANCEIRA'
-    WHEN    ATENDCHAT.SERVICO = 'BancoChat'                             THEN 'CHAT NEGOCIOS DIGITAIS'
-    WHEN    ATENDCHAT.SERVICO = 'WhatsappBanco'                         THEN 'WHATSAPP NEGOCIOS DIGITAIS'
-    WHEN    ATENDCHAT.SERVICO = 'WhatsAppNegociacao'                    THEN 'WHATSAPP CENTRAL NEGOCIAÇÃO'
-    WHEN    ATENDCHAT.SERVICO = 'CentralNegociacao'                     THEN 'CHAT CENTRAL NEGOCIAÇÃO'
-    WHEN    ATENDCHAT.SERVICO = 'CentralNegociacaoChatBot'              THEN 'CHATBOT CENTRAL NEGOCIAÇÃO'
-    WHEN    ATENDCHAT.SERVICO = 'WhatsappChatBot'                       THEN 'WHATSAPP CHATBOT'
-    WHEN    ATENDCHAT.SERVICO = 'WhatsApp2nivel'                        THEN 'AVALIAR'
-    WHEN    CES2N.PROTOCOLO IS NOT NULL                                 THEN '2 NIVEL'
-    WHEN    CESCHAT.PROTOCOLO IS NOT NULL                               THEN 'CHAT'
-    WHEN    PESQCHAT.PROTOCOLO IS NOT NULL                              THEN 'CHAT'
-    WHEN    TRIGG."Forma de contato" IS NOT NULL                        THEN TRIGG."Forma de contato"
-    WHEN    SF."PROPRIETARIO PROTOCOLO" LIKE '%2 ° Nível%'              THEN '2 NIVEL'
-    ELSE NULL
-END OPERACAO
+    CASE    WHEN SF.CENTRAL IS NOT NULL                             THEN SF.CENTRAL
+            WHEN CES2N.CENTRAL IS NOT NULL                          THEN CES2N.CENTRAL
+            WHEN CESCHAT.CENTRAL IS NOT NULL                        THEN CESCHAT.CENTRAL
+            WHEN PESQCHAT.CENTRAL IS NOT NULL                       THEN PESQCHAT.CENTRAL
+            WHEN TRIGG."Time" IS NOT NULL                           THEN TRIGG."Time"
+        ELSE NULL   END CENTRAL                                             ,
+    
+    SF."ORIGEM DO PROTOCOLO"                    AS SF_ORIGEM_PROTOCOLO      ,
+    SF.CANAL                                    AS SF_CANAL                 ,
 
-,CASE
-    WHEN    SF.CENTRAL IS NOT NULL                      THEN SF.CENTRAL
-    WHEN    CES2N.CENTRAL IS NOT NULL                   THEN CES2N.CENTRAL
-    WHEN    CESCHAT.CENTRAL IS NOT NULL                 THEN CESCHAT.CENTRAL
-    WHEN    PESQCHAT.CENTRAL IS NOT NULL                THEN PESQCHAT.CENTRAL
-    WHEN    TRIGG."Time" IS NOT NULL                    THEN TRIGG."Time"
-    ELSE NULL
-END CENTRAL
+    CASE    WHEN ATENDCHAT.PROTOCOLO IS NOT NULL                    THEN 1
+        ELSE NULL   END CHAMADA_RECEBIDA                                    ,
 
-,CASE
-    WHEN    ATENDCHAT.PROTOCOLO IS NOT NULL             THEN 1
-    ELSE NULL
-END CHAMADA_RECEBIDA
+    CASE    WHEN ATENDCHAT.PROTOCOLO IS NOT NULL  AND ATENDCHAT.ABANDONO IS NULL          THEN 1
+            WHEN ATENDCHAT.PROTOCOLO IS NOT NULL  AND ATENDCHAT.ABANDONO IS NOT NULL      THEN 0
+        ELSE NULL   END CHAMADA_ATENDIDA                                    ,
 
-,CASE
-    WHEN    ATENDCHAT.PROTOCOLO IS NOT NULL  AND ATENDCHAT.ABANDONO IS NULL          THEN 1
-    WHEN    ATENDCHAT.PROTOCOLO IS NOT NULL  AND ATENDCHAT.ABANDONO IS NOT NULL      THEN 0
-    ELSE NULL
-END CHAMADA_ATENDIDA
+    CASE    WHEN ATENDCHAT.ABANDONO IS NOT NULL                     THEN 1  
+        ELSE NULL   END CHAMADA_ABANDONADA                                  ,
 
-,CASE
-    WHEN    ATENDCHAT.ABANDONO IS NOT NULL              THEN 1  
-    ELSE NULL
-END CHAMADA_ABANDONADA
+    CASE    WHEN ATENDCHAT."TMchat" IS NOT NULL                     THEN ATENDCHAT."TMchat"  
+        ELSE NULL   END TMO                                                 ,
 
-,CASE
-    WHEN    ATENDCHAT."TMchat" IS NOT NULL              THEN ATENDCHAT."TMchat"  
-    ELSE NULL
-END TMO
+    CASE    WHEN ATENDCHAT.TME IS NOT NULL                          THEN ATENDCHAT.TME  
+            WHEN ATENDCHAT.ABANDONO IS NOT NULL                     THEN ATENDCHAT.ABANDONO
+        ELSE NULL   END TME                                                 ,
 
-,CASE
-    WHEN    ATENDCHAT.TME IS NOT NULL                   THEN ATENDCHAT.TME  
-    WHEN    ATENDCHAT.ABANDONO IS NOT NULL              THEN ATENDCHAT.ABANDONO
-    ELSE NULL
-END TME
+    CASE    WHEN SF."CRIADO POR" IS NOT NULL                        THEN UPPER (SF."CRIADO POR")
+            WHEN TRIGG."Nome do atendente" IS NOT NULL              THEN UPPER (TRIGG."Nome do atendente")
+        ELSE NULL   END CRIADO_POR                                          ,
+    
+    SF."FECHADO PELO USUARIO"                   AS SF_FECHADO_POR           ,
+    SF."PROPRIETARIO PROTOCOLO"                 AS SF_PROPRIETARIO          ,
 
-,CASE
-    WHEN    SF."CRIADO POR" IS NOT NULL                 THEN UPPER (SF."CRIADO POR")
-    WHEN    TRIGG."Nome do atendente" IS NOT NULL       THEN UPPER (TRIGG."Nome do atendente")
-    ELSE NULL
-END CRIADO_POR
+    SF."AGENTE RESPONSAVEL"                     AS SF_AGENTE_RESPONSAVEL    ,
+    SF."COD AGENTE RESPONSAVEL"                 AS SF_COD_AGENTE            ,
+    SF."NAO CLIENTE"                            AS NAO_CLIENTE              ,
 
-------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------
---TABELA TB_SALESFORCE_TODAS_CENTRAIS
+    --QUALIDADE
+    PESQCHAT.NPS                                AS NPS_NOTA                 ,
+    PESQCHAT.CSAT                               AS CSAT_NOTA                ,
 
---        SF.DATA_REF                                                     AS SF_DATA
---        SF.AGENTE DE ORIGEM
---        SF.ALTO ATRITO
---        SF.BKO - IMPROCEDENTE
---,       SF.CEDENTE                                                      AS SF_CEDENTE
---,       SF.CONTRATO                                                     AS SF_CONTRATO
-,       SF."AGENTE RESPONSAVEL"                                         AS SF_AGENTE_RESPONSAVEL
-,       SF."COD AGENTE RESPONSAVEL"                                     AS SF_COD_AGENTE
---,       SF."NUMERO DO PROTOCOLO"                                        AS SF_PROTOCOLO
---,       REPLACE(REPLACE(SF."NOME DA CONTA CPF",'.',''),'-','')          AS SF_CPF
-,       SF."NAO CLIENTE"                                                AS SF_NAO_CLIENTE
---,       REPLACE(REPLACE(SF.CPF,'.',''),'-','')                          AS SF_CPF_2
---,       SF.CENTRAL                                                      AS SF_CENTRAL
-,       SF."DATA/HORA DE ABERTURA"                                      AS SF_DATA_HR_ABERTURA
-,       SF."DATA/HORA DE FECHAMENTO"                                    AS SF_DATA_HR_FECHAMENTO
-,       SF."PROPRIETARIO PROTOCOLO"                                     AS SF_PROPRIETARIO
---,       SF."CRIADO POR"                                                 AS SF_CRIADO_POR
-,       SF."FECHADO PELO USUARIO"                                       AS SF_FECHADO_POR
---,       SF.TIPO                                                         AS SF_TIPO
---,       SF.MOTIVO                                                       AS SF_MOTIVO
---,       SF."SUB-MOTIVO"                                                 AS SF_SUBMOTIVO
---,       SF.PRODUTO                                                      AS SF_PRODUTO
---,       SF."PRODUTO DO CONTRATO"                                        AS SF_PRODUTO_CONTRATO
-,       SF."ORIGEM DO PROTOCOLO"                                        AS SF_ORIGEM_PROTOCOLO
---        SF.STATUS
---        SF.CRIADO POR_
-,       SF."PRIMEIRO ATENDIMENTO"                                       AS SF_PRIMEIRO_ATENDIMENTO
---        SF.EMAIL
-,       SF.CANAL                                                        AS SF_CANAL
+    CASE    WHEN CES2N.NOTA_CES IS NOT NULL                         THEN CES2N.NOTA_CES
+            WHEN CESCHAT.NOTA_CES IS NOT NULL                       THEN CESCHAT.NOTA_CES
+            WHEN PESQCHAT.PESQ_ATEND IS NOT NULL                    THEN PESQCHAT.PESQ_ATEND
+        ELSE NULL   END CES_NOTA                                            ,
 
-------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------
---PESQUISA NPS
-,       PESQCHAT.NPS                                                    AS NPS_NOTA
-,       PESQCHAT.CSAT                                                   AS CSAT_NOTA   
+    CASE    WHEN CES2N.COMENTARIO IS NOT NULL                       THEN CES2N.COMENTARIO
+            WHEN CESCHAT.COMENTARIO IS NOT NULL                     THEN CESCHAT.COMENTARIO
+        ELSE NULL   END CES_COMENTARIO                                      ,
 
-------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------
---PESQUISA CES
-
-,CASE
-    WHEN    CES2N.NOTA_CES IS NOT NULL                  THEN CES2N.NOTA_CES
-    WHEN    CESCHAT.NOTA_CES IS NOT NULL                THEN CESCHAT.NOTA_CES
-    WHEN    PESQCHAT.PESQ_ATEND IS NOT NULL             THEN PESQCHAT.PESQ_ATEND
-    ELSE NULL
-END CES_NOTA
-
-,CASE
-    WHEN    CES2N.COMENTARIO IS NOT NULL                THEN CES2N.COMENTARIO
-    WHEN    CESCHAT.COMENTARIO IS NOT NULL              THEN CESCHAT.COMENTARIO
-    ELSE NULL
-END CES_COMENTARIO
- 
-------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------
---BASE TRIGG
-
-,TRIGG."HORA_INICIO"                    AS TRIGG_HR_INICIO
-,TRIGG."DT_PREVISAO"                    AS TRIGG_DT_PREVISAO
-,TRIGG."HR_PREVISAO"                    AS TRIGG_HR_PREVISAO
-,TRIGG."DT_CONCLUSAO"                   AS TRIGG_DT_CONCLUSAO
-,TRIGG."HR_CONCLUSAO"                   AS TRIGG_HR_CONCLUSAO
-
-------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------
+    --TRIGG
+    TRIGG."HORA_INICIO"                     AS TRIGG_HR_INICIO              ,
+    TRIGG."DT_PREVISAO"                     AS TRIGG_DT_PREVISAO            ,
+    TRIGG."HR_PREVISAO"                     AS TRIGG_HR_PREVISAO            ,
+    TRIGG."DT_CONCLUSAO"                    AS TRIGG_DT_CONCLUSAO           ,
+    TRIGG."HR_CONCLUSAO"                    AS TRIGG_HR_CONCLUSAO
 
 
 FROM TB_SALESFORCE_TODAS_CENTRAIS SF
