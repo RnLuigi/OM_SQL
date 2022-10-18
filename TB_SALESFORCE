@@ -176,7 +176,7 @@ CREATE VIEW VIEW_BASE_PROTOCOLOS AS (
     CASE    WHEN ATENDCHAT.ABANDONO IS NOT NULL                     THEN 1  
         ELSE NULL   END CHAMADA_ABANDONADA                                  ,
 
-    CASE    WHEN ATENDCHAT."TMchat" IS NOT NULL                     THEN ATENDCHAT."TMchat"  
+    CASE    WHEN ATENDCHAT."TMCHAT" IS NOT NULL                     THEN ATENDCHAT."TMCHAT"  
         ELSE NULL   END TMO                                                 ,
 
     CASE    WHEN ATENDCHAT.TME IS NOT NULL                          THEN ATENDCHAT.TME  
