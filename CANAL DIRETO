@@ -16,6 +16,23 @@ SELECT * FROM VW_CANAL_DIRETO
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+CREATE VIEW VW_CANAL_DIRETO AS (
+    SELECT 
+        CON.CONTRATO,
+        GPC.DESCRICAO,
+        AG.CODIGO,
+        AG.FANTASIA,
+        AG.APELIDO,
+        CLI.CPF_CGC
+    FROM AGENTES@DW AG, GRUPO_CANAL_VENDA@DW GPC, CONTRATOS@DW CON, CLIENTES@DW CLI
+    
+    WHERE       AG.GRUPO_CANAL_VENDA = 2 
+            AND CON.CLIENTE = CLI.CODIGO 
+            AND GPC.CODIGO = AG.GRUPO_CANAL_VENDA 
+            AND CON.AGENTE = AG.CODIGO)
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 CREATE VIEW VIEW_CDIRETO_OMD AS (
     SELECT 
         A.DATA_REF                                                  ,
@@ -36,3 +53,9 @@ CREATE VIEW VIEW_CDIRETO_OMD AS (
 
     LEFT JOIN VW_CANAL_DIRETO D
         ON C.CONTRATO = D.CONTRATO )
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+CREATE TABLE TABLE_CDIRETO_OMD AS (
+    SELECT DISTINCT * FROM VIEW_CDIRETO_OMD
+    WHERE DESCRICAO = 'CANAL DIRETO' )
