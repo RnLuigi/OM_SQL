@@ -1,21 +1,38 @@
-SELECT 
+-- Tabelas de Apoio
 
-A.DATA_REF,
-A.ASSUNTOS,
-A.CANAL,
-REPLACE(REPLACE(A.CPF, '-',''),'.','')  AS CPF,
-A.PRODUTOS,
-A.COD_MANIFESTACAO,
-D.DESCRICAO,
-C.CONTRATO
+SELECT * FROM CLIENTES@DW
+SELECT * FROM CONTRATOS@DW
 
-FROM TB_OMD_GERAL A
 
-LEFT JOIN CLIENTES@DW B
-    ON REPLACE(REPLACE(A.CPF, '-',''),'.','') = B.CPF_CGC
+-- Tabelas Unificadas
 
-LEFT JOIN CONTRATOS@DW C
-    ON B.CODIGO = C.CLIENTE
+SELECT * FROM VIEW_AREA_LOG_DT
 
-LEFT JOIN VW_CANAL_DIRETO D
-    ON C.CONTRATO = D.CONTRATO
+-- Tabelas/View criadas
+
+SELECT * FROM VW_CANAL_DIRETO
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+CREATE VIEW VIEW_CDIRETO_OMD AS (
+    SELECT 
+        A.DATA_REF                                                  ,
+        A.ASSUNTOS                                                  ,
+        A.CANAL                                                     ,
+        REPLACE(REPLACE(A.CPF, '-',''),'.','')  AS CPF              ,
+        A.PRODUTOS                                                  ,
+        A.COD_MANIFESTACAO                                          ,
+        D.DESCRICAO                                                 ,
+        C.CONTRATO
+    FROM TB_OMD_GERAL A
+
+    LEFT JOIN CLIENTES@DW B
+        ON REPLACE(REPLACE(A.CPF, '-',''),'.','') = B.CPF_CGC
+
+    LEFT JOIN CONTRATOS@DW C
+        ON B.CODIGO = C.CLIENTE
+
+    LEFT JOIN VW_CANAL_DIRETO D
+        ON C.CONTRATO = D.CONTRATO )
