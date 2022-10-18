@@ -22,11 +22,43 @@ SELECT * FROM VIEW_ATENDIMENTO_F9_GNS
 DELETE FROM TB_PESQ_CHAT_2022
 WHERE DATA LIKE '%10/2022%'
 
-DROP TABLE TB_PESQ_CHAT_MES
-
 INSERT INTO TB_PESQ_CHAT_2022 (
 DATA, CONTRATO, PROTOCOLO, CPF, PROPRIETARIO, PRODUTO_CONTRATO, CENTRAL, PRODUTO, CSAT, NPS, PESQ_ATEND )
 SELECT * FROM TB_PESQ_CHAT_MES 
+
+DROP TABLE TB_PESQ_CHAT_MES
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--EXECUTAR PARA INSERIR NOVOS DADOS NA BASE
+
+--AJUSTAR A BASE DO CHAT
+CREATE VIEW VIEW_CHAT_TABULACAO AS (
+    SELECT  
+        LPAD(DATA, 10) AS DATA,
+        PROTOCOLO, 
+        PROPRIETARIO, 
+        SERVICO, 
+        TIPO, 
+        MOTIVO, 
+        SUBMOTIVO,
+        CAST (TME AS BINARY_DOUBLE ) AS TME,
+        TMO AS TMchat, 
+        CAST (TEMPO_ABANDONO AS BINARY_DOUBLE ) AS ABANDONO, 
+        SUBSTR (HORA_INICIO, 12,5) AS  HORA_INICIO,
+        SUBSTR (HORA_FIM, 12, 5) AS HORA_FIM
+    FROM TB_CHAT_TABULACAO )
+
+DELETE FROM TB_VISAO_CHAT
+WHERE DATA LIKE '%10/2022%';
+
+INSERT INTO TB_VISAO_CHAT (
+DATA, CONTRATO, PROTOCOLO, CPF, PROPRIETARIO, PRODUTO_CONTRATO, CENTRAL, PRODUTO, CSAT, NPS, PESQ_ATEND )
+SELECT * FROM VIEW_CHAT_TABULACAO;
+
+DROP TABLE TB_CHAT_TABULACAO
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
