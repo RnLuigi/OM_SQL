@@ -1,0 +1,255 @@
+-- Tabelas de Apoio
+
+SELECT * FROM 
+
+-- Tabelas Unificadas
+
+SELECT * FROM 
+
+-- Tabelas/View criadas
+
+SELECT * FROM VIEW_SF_OMD_PLUSOFT
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+CREATE VIEW VIEW_SF_OMD_PLUSOFT AS (
+    SELECT 
+        CASE    WHEN A."NUMERO DO PROTOCOLO" IS NOT NULL            THEN 'SALESFORCE'
+                WHEN B.COD_MANIFESTACAO IS NOT NULL                 THEN 'OMD'
+                WHEN C."Número do atendimento" IS NOT NULL          THEN 'TRIGG'
+            ELSE NULL   END SISTEMA                                                         ,
+    
+        CASE    WHEN A."DATA/HORA DE ABERTURA" IS NOT NULL          THEN SUBSTR(A."DATA/HORA DE ABERTURA",1,10)
+                WHEN B.DATA_REF IS NOT NULL                         THEN TO_CHAR(TO_DATE(B.DATA_REF, 'DD/MM/YY'), 'DD/MM/YYYY')
+                WHEN C.DATA_REGISTRO_OCORRENCIA IS NOT NULL         THEN SUBSTR(C.DATA_REGISTRO_OCORRENCIA,1,10)
+            ELSE NULL   END DATA                                                            ,
+        
+        CASE    WHEN A."NUMERO DO PROTOCOLO" IS NOT NULL            THEN A."NUMERO DO PROTOCOLO"
+                WHEN B.COD_MANIFESTACAO IS NOT NULL                 THEN TO_CHAR(B.COD_MANIFESTACAO,'999999999999')
+                WHEN C."Número do atendimento" IS NOT NULL          THEN C."Número do atendimento"
+            ELSE NULL END PROTOCOLO                                                         ,
+
+        CASE    WHEN A."NOME DA CONTA CPF" IS NOT NULL              THEN REPLACE(REPLACE(A."NOME DA CONTA CPF", '-',''), '.','')
+                WHEN A.CPF IS NOT NULL                              THEN REPLACE(REPLACE(A.CPF, '-',''), '.','')
+                WHEN B.CPF IS NOT NULL                              THEN REPLACE(REPLACE(B.CPF, '-',''), '.','')
+                WHEN C."CPF/CNPJ" IS NOT NULL                       THEN C."CPF/CNPJ"
+            ELSE NULL   END CPF                                                             ,
+
+        CASE    WHEN A.CONTRATO IS NOT NULL                         THEN A.CONTRATO
+                WHEN B.COD_MANIFESTACAO IS NOT NULL         THEN CTT.CONTRATO
+            ELSE NULL   END CONTRATO                                                        ,
+
+        CASE    WHEN A.TIPO IS NOT NULL                             THEN A.TIPO
+                WHEN B.COD_MANIFESTACAO IS NOT NULL                 THEN 'OUVIDORIA'
+                WHEN C."Tipo de ocorrência" IS NOT NULL             THEN C."Tipo de ocorrência"
+            ELSE NULL   END TIPO                                                            ,
+    
+    CASE    WHEN A.MOTIVO IS NOT NULL                           THEN A.MOTIVO
+            WHEN B.ASSUNTOS IS NOT NULL                         THEN B.ASSUNTOS
+            WHEN C."Grupo de tipo de ocorrência" IS NOT NULL    THEN C."Grupo de tipo de ocorrência"  
+        ELSE NULL   END MOTIVO,
+
+    CASE    WHEN A."SUB-MOTIVO" IS NOT NULL                     THEN A."SUB-MOTIVO" 
+            WHEN C."Ocorrência" IS NOT NULL                     THEN C."Ocorrência"
+        ELSE NULL   END SUBMOTIVO,
+    
+    CASE    WHEN A.CENTRAL LIKE '%CR%'                          THEN 'CR'
+            WHEN A.CENTRAL LIKE '%SAC%'                         THEN 'SAC'
+            WHEN B.CANAL = 'Sites de reputação'                 THEN B.CLASSIFICACAO
+            WHEN B.CANAL IS NOT NULL                            THEN B.CANAL
+            WHEN C."Forma de contato" IS NOT NULL               THEN C."Forma de contato"
+        ELSE NULL   END CANAL,
+    
+    A.CEDENTE,
+        
+    CASE    WHEN A.PRODUTO IS NOT NULL                          THEN UPPER(A.PRODUTO)
+            WHEN C."Número do atendimento" IS NOT NULL          THEN 'TRIGG'
+            WHEN B.PRODUTOS IS NOT NULL                         THEN UPPER(B.PRODUTOS)
+        ELSE '-'    END PRODUTO,
+    
+    CASE    WHEN A."PRODUTO DO CONTRATO" IS NOT NULL            THEN UPPER(A."PRODUTO DO CONTRATO")
+            WHEN C."Número do atendimento" IS NOT NULL          THEN 'TRIGG'
+        ELSE '-'    END PRODUTO_CONTRATO,    
+        
+    CASE    WHEN A."COD AGENTE RESPONSAVEL" IS NOT NULL         THEN A."COD AGENTE RESPONSAVEL"
+            WHEN B.UNIDADE_OCORRENCIA IS NOT NULL               THEN UPPER(B.UNIDADE_OCORRENCIA)
+            WHEN C."Número do atendimento" IS NOT NULL          THEN 'TRIGG'
+        ELSE '-'    END COD_AGENTE,
+    
+    CASE    WHEN A."AGENTE RESPONSAVEL" IS NOT NULL             THEN UPPER(A."AGENTE RESPONSAVEL")
+            WHEN C."Número do atendimento" IS NOT NULL          THEN 'TRIGG'
+        ELSE '-'    END AGENTE_RESP 
+
+FROM TB_SALESFORCE_TODAS_CENTRAIS A
+
+FULL JOIN TB_OMD_GERAL B
+    ON A."NUMERO DO PROTOCOLO" = B.COD_MANIFESTACAO
+
+FULL JOIN TB_PLUSOFT_TRIGG C
+    ON A."NUMERO DO PROTOCOLO" = C."Número do atendimento"
+
+LEFT JOIN CLIENTES@DW CLI
+    ON REPLACE(REPLACE(B.CPF, '-',''), '.','') = CLI.CPF_CGC
+
+LEFT JOIN CONTRATOS@DW CTT
+    ON CLI.CODIGO = CTT.CLIENTE )
+
+
+    ----------------------------------------------------------------
+
+    DROP TABLE TB_SF_OMD_PLUSOFT;
+CREATE TABLE TB_SF_OMD_PLUSOFT AS (
+SELECT DISTINCT * FROM VIEW_SF_OMD_PLUSOFT )
+
+
+
+SELECT A.*,
+
+    CASE    WHEN A.SISTEMA = 'TRIGG'                    THEN 'TRIGG'
+            WHEN AP_C.BU IS NOT NULL                    THEN AP_C.BU
+            WHEN AP_P.BU IS NOT NULL                    THEN AP_P.BU
+        ELSE NULL   END BU,
+
+    CASE    WHEN A.SISTEMA = 'TRIGG'                    THEN 'TRIGG'
+            WHEN AP_C."BU SERVIÇO" IS NOT NULL          THEN AP_C."BU SERVIÇO"
+            WHEN AP_P."BU SERVIÇO"  IS NOT NULL         THEN AP_P."BU SERVIÇO" 
+        ELSE NULL   END BU_SERVICO,
+    
+    AP_AG.NOME_AGENTE,
+    AP_AG.GRUPO,
+    AP_AG.TIPO      AS CORRESPONDENTE,
+    CD.DESCRICAO    AS CANAL_DIRETO
+
+FROM TB_SF_OMD_PLUSOFT A
+
+LEFT JOIN APOIO_CEDENTE AP_C
+    ON A.CEDENTE = AP_C.CEDENTE
+
+LEFT JOIN APOIO_PRODUTO AP_P
+    ON  A.PRODUTO = AP_P.PRODUTO
+    AND A.PRODUTO_CONTRATO = AP_P.PRODUTO_CONTRATO
+
+LEFT JOIN APOIO_AGENTE AP_AG
+    ON A.COD_AGENTE = AP_AG.COD_AGENTE
+
+LEFT JOIN VW_CANAL_DIRETO CD
+    ON A.CONTRATO = CD.CONTRATO
+
+
+
+SELECT * FROM APOIO_CEDENTE
+SELECT * FROM APOIO_PRODUTO
+SELECT * FROM APOIO_AGENTE
+SELECT * FROM VW_CANAL_DIRETO
+
+-----------------------------------------------------------------
+
+
+
+    
+    DESCRIBE TB_SALESFORCE_TODAS_CENTRAIS
+    SELECT * FROM TB_SALESFORCE_TODAS_CENTRAIS
+    DATA_REF, 
+    AGENTE DE ORIGEM, 
+    ALTO ATRITO, 
+    BKO - IMPROCEDENTE, 
+    CEDENTE, 
+--    CONTRATO, 
+    AGENTE RESPONSAVEL, 
+    COD AGENTE RESPONSAVEL, 
+--    NUMERO DO PROTOCOLO, 
+--    NOME DA CONTA CPF, 
+    NAO CLIENTE, 
+--    CPF, 
+    CENTRAL, 
+--PEND HR    DATA/HORA DE ABERTURA, 
+    DATA/HORA DE FECHAMENTO, 
+    PROPRIETARIO PROTOCOLO, 
+    CRIADO POR, 
+    FECHADO PELO USUARIO, 
+--    TIPO, 
+--    MOTIVO, 
+--    SUB-MOTIVO, 
+    PRODUTO, 
+    PRODUTO DO CONTRATO, 
+    ORIGEM DO PROTOCOLO, 
+    STATUS, 
+    CRIADO POR_, 
+    PRIMEIRO ATENDIMENTO, 
+    EMAIL, 
+    CANAL
+    
+    DESCRIBE TB_OMD_GERAL
+    SELECT * FROM TB_OMD_GERAL
+--    DATA_REF, 
+    RECEBIMENTO, 
+    PRAZO_MANIFESTACAO, 
+    FORMA_ENTRADA, 
+    MANIFESTANTE, 
+    NOME_TERCEIRO, 
+    CONTATO, 
+    CLASSIFICACAO, 
+--    COD_MANIFESTACAO, 
+    MANIFESTACAO_ANTERIOR, 
+    PRODUTOS, 
+--    ASSUNTOS, 
+    DESCRICAO, 
+    NOME, 
+--    CPF, 
+    CNPJ, 
+    RAZAO_SOCIAL, 
+    ESTADO, 
+    MUNICIPIO, 
+    BAIRRO, 
+    UNIDADE_OCORRENCIA, 
+    STATUS, 
+    PRIORIDADE, 
+    RESULTADO, 
+    FINALIZACAO, 
+    PRAZO_CONCLUSAO, 
+    ORIGEM, 
+    INSTITUICAO, 
+    CANAL, 
+    ANALISTA, 
+    VALOR_PERDA_FINANCEIRA, 
+    QUEM_CAUSOU, 
+    JUSTIFICATIVA, 
+    EMAIL_1, 
+    EMAIL_2
+    
+    
+     SELECT DISTINCT SUBSTR(C.DATA_REGISTRO_OCORRENCIA,1,10) FROM TB_PLUSOFT_TRIGG C
+    
+    SELECT * FROM TB_PLUSOFT_TRIGG
+--    Número do atendimento, 
+--    CPF/CNPJ, 
+    COD_INTERNO_OCORRENCIA, 
+--PEND HR    DATA_REGISTRO_OCORRENCIA, 
+    DATA_PREVISAO_OCORRENCIA, 
+    DATA_CONCLUSAO, 
+    Forma de contato, 
+    Categoria de assunto, 
+    Grupo de assunto, 
+--    Assunto, 
+--    Tipo de ocorrência, 
+--    Grupo de tipo de ocorrência, 
+    Ocorrência, 
+    Nome do atendente, 
+    Time, 
+    USR_ENCERRAMENTO_OCO
+    
+    
+    
+    
+    
+SELECT * FROM TB_SALESFORCE_TODAS_CENTRAIS
+SELECT * FROM TB_GENESYS_INTERACOES_FINAL
+SELECT * FROM TB_GENESYS_INTERACOES
+SELECT * FROM TB_PESQ_CHAT_2022
+SELECT * FROM TB_VISAO_CHAT
+SELECT * FROM TB_OMD_GERAL
+
+SELECT * FROM TB_PLUSOFT_TRIGG
+SELECT * FROM VW_CANAL_DIRETO

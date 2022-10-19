@@ -1,0 +1,285 @@
+
+--BASE PIPEFY 2 NIVEL
+SELECT * FROM TB_PIPEFY_UZE
+
+--CRIAR VIEW COM OS CAMPOS AJUSTADOS
+CREATE VIEW VIEW_PIPEFY_UZE AS (
+SELECT DISTINCT
+    PROTOCOLO, 
+    SUBSTR(DATA_HR_INI,1,10)                 AS DATA_INI,
+    SUBSTR(DATA_HR_INI,12,8)                 AS HR_INI,
+    SUBSTR(DATA_HR_FIM,1,10)                 AS DATA_FIM,
+    SUBSTR(DATA_HR_FIM,12,8)                 AS HR_FIM,
+    REPLACE(REPLACE(CPF, '-',''), '.','')    AS CPF  , 
+    UPPER (OPERADOR)                         AS OPERADOR, 
+    UPPER (STATUS)                           AS STATUS, 
+    UPPER (PRODUTO)                          AS PRODUTO, 
+    UPPER (MOTIVO)                           AS MOTIVO, 
+    UPPER (TIPO)                             AS TIPO
+FROM TB_PIPEFY_UZE )
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+SELECT * FROM TB_PLUSOFT_TRIGG
+
+
+INSERT INTO TB_PLUSOFT_TRIGG (
+"Número do atendimento", 
+"CPF/CNPJ", 
+"COD_INTERNO_OCORRENCIA", 
+"DATA_REGISTRO_OCORRENCIA", 
+"DATA_PREVISAO_OCORRENCIA", 
+"DATA_CONCLUSAO", 
+"Forma de contato", 
+"Categoria de assunto", 
+"Grupo de assunto", 
+"Assunto", 
+"Tipo de ocorrência", 
+"Grupo de tipo de ocorrência", 
+"Ocorrência", 
+"Nome do atendente", 
+"Time", 
+"USR_ENCERRAMENTO_OCO" ) 
+SELECT * FROM TB_PLUSOFT_TRIGG_ 
+
+DROP TABLE TB_PLUSOFT_TRIGG_
+
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------
+
+--BASE PLUSOFT GERAL
+SELECT * FROM TB_PLUSOFT_TRIGG
+
+--CRIAR VIEW COM OS CAMPOS AJUSTADOS
+
+CREATE VIEW VIEW_PLUSOFT_TRIGG AS (
+SELECT DISTINCT 
+
+"Número do atendimento"                                 AS PROTOCOLO,
+"CPF/CNPJ"                                              AS CPF, 
+--COD_INTERNO_OCORRENCIA, 
+SUBSTR(DATA_REGISTRO_OCORRENCIA,1,10)                   AS DATA_INI,
+CONCAT(SUBSTR(DATA_REGISTRO_OCORRENCIA,12,6),':00')     AS HR_INI,
+
+SUBSTR(DATA_PREVISAO_OCORRENCIA,1,10)                   AS DATA_PREVISAO,
+CONCAT(SUBSTR(DATA_PREVISAO_OCORRENCIA,12,6),':00')     AS HR_PREVISAO,
+
+SUBSTR(DATA_CONCLUSAO,1,10)                             AS DATA_FIM,
+CONCAT(SUBSTR(DATA_CONCLUSAO,12,6),':00')               AS HR_FIM,
+
+"Forma de contato"                                      AS CANAL, 
+"Categoria de assunto"                                  AS PRODUTO,
+"Grupo de assunto"                                      AS CENTRAL, 
+"Assunto"                                               AS PRODUTO_CONTRATO, 
+"Tipo de ocorrência"                                    AS TIPO, 
+"Grupo de tipo de ocorrência"                           AS MOTIVO, 
+"Ocorrência"                                            AS SUBMOTIVO, 
+"Nome do atendente"                                     AS OPERADOR, 
+"Time"                                                  AS ATENDIMENTO, 
+"USR_ENCERRAMENTO_OCO"                                  AS OPERADOR_ENCERRADO
+
+FROM TB_PLUSOFT_TRIGG )
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+CREATE VIEW VIEW_PPFY_PSOFT AS (
+SELECT  
+
+    CASE    WHEN PSOFT.PROTOCOLO IS NOT NULL        THEN PSOFT.PROTOCOLO
+            WHEN PPFY.PROTOCOLO IS NOT NULL         THEN PPFY.PROTOCOLO
+        ELSE NULL   END PROTOCOLO,
+
+    CASE    WHEN PSOFT.CPF IS NOT NULL              THEN PSOFT.CPF
+            WHEN PPFY.CPF IS NOT NULL               THEN PPFY.CPF
+        ELSE NULL   END CPF,
+        
+    CASE    WHEN PSOFT.DATA_INI IS NOT NULL         THEN PSOFT.DATA_INI
+            WHEN PPFY.DATA_INI IS NOT NULL          THEN PPFY.DATA_INI
+        ELSE NULL   END DATA_INI,
+
+    CASE    WHEN PSOFT.HR_INI IS NOT NULL           THEN PSOFT.HR_INI
+            WHEN PPFY.HR_INI IS NOT NULL            THEN PPFY.HR_INI
+        ELSE NULL   END HR_INI,
+
+PSOFT.DATA_PREVISAO, 
+PSOFT.HR_PREVISAO, 
+
+    CASE    WHEN PSOFT.DATA_FIM IS NOT NULL         THEN PSOFT.DATA_FIM
+            WHEN PPFY.DATA_FIM IS NOT NULL          THEN PPFY.DATA_FIM
+        ELSE NULL   END DATA_FIM,
+
+    CASE    WHEN PSOFT.HR_FIM IS NOT NULL           THEN PSOFT.HR_FIM
+            WHEN PPFY.HR_FIM IS NOT NULL            THEN PPFY.HR_FIM
+        ELSE NULL   END HR_FIM,
+
+    SUBSTR(TO_CHAR(SYSDATE, 'DD/MM/YYYY'),1,10) AS HOJE,
+
+PSOFT.CANAL, 
+
+    CASE    WHEN PSOFT.PRODUTO IS NOT NULL          THEN UPPER(PSOFT.PRODUTO)
+            WHEN PPFY.PRODUTO IS NOT NULL           THEN PPFY.PRODUTO
+        ELSE NULL   END PRODUTO,
+
+PSOFT.CENTRAL, 
+PSOFT.PRODUTO_CONTRATO, 
+
+    CASE    WHEN PSOFT.TIPO IS NOT NULL             THEN UPPER(PSOFT.TIPO)
+            WHEN PPFY.TIPO IS NOT NULL              THEN PPFY.TIPO
+        ELSE NULL   END TIPO,
+
+    CASE    WHEN PSOFT.MOTIVO IS NOT NULL           THEN UPPER(PSOFT.MOTIVO)
+            WHEN PPFY.MOTIVO IS NOT NULL            THEN PPFY.MOTIVO
+        ELSE NULL   END MOTIVO,
+
+UPPER(PSOFT.SUBMOTIVO)                              AS SUBMOTIVO, 
+
+    CASE    WHEN PSOFT.OPERADOR IS NOT NULL         THEN UPPER(PSOFT.OPERADOR)
+            WHEN PPFY.OPERADOR IS NOT NULL          THEN PPFY.OPERADOR
+        ELSE NULL   END OPERADOR,
+
+    CASE    WHEN PSOFT.ATENDIMENTO IS NOT NULL         THEN UPPER(PSOFT.ATENDIMENTO)
+            WHEN PPFY.PROTOCOLO IS NOT NULL          THEN '2 NIVEL'                     ------ATENÇÃO PARA A BASE SE ADICIONAR TODOS OS ATENDIMENTOS
+        ELSE NULL   END ATENDIMENTO,
+
+PSOFT.OPERADOR_ENCERRADO,
+PPFY.STATUS,
+
+    CASE    WHEN PSOFT.PROTOCOLO IS NOT NULL        THEN 'PLUSOFT'
+            WHEN PPFY.PROTOCOLO IS NOT NULL         THEN 'PIPEFY'
+        ELSE NULL   END SISTEMA,
+    
+    CASE    WHEN PSOFT.PROTOCOLO IS NOT NULL        THEN 'TRIGG'
+            WHEN PPFY.PROTOCOLO IS NOT NULL         THEN 'UZE'
+        ELSE NULL   END COMPLEMENTO_SISTEMA
+
+
+FROM VIEW_PLUSOFT_TRIGG PSOFT
+
+FULL JOIN VIEW_PIPEFY_UZE PPFY
+    ON  PSOFT.PROTOCOLO = PPFY.PROTOCOLO )
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+    CREATE VIEW VIEW_RELATORIO_SLA AS (
+SELECT
+    CASE    WHEN DATA_INI LIKE '%01/2022%' THEN '01/01/2022'
+            WHEN DATA_INI LIKE '%02/2022%' THEN '01/02/2022'
+            WHEN DATA_INI LIKE '%03/2022%' THEN '01/03/2022'
+            WHEN DATA_INI LIKE '%04/2022%' THEN '01/04/2022'
+            WHEN DATA_INI LIKE '%05/2022%' THEN '01/05/2022'
+            WHEN DATA_INI LIKE '%06/2022%' THEN '01/06/2022'
+            WHEN DATA_INI LIKE '%07/2022%' THEN '01/07/2022'
+            WHEN DATA_INI LIKE '%08/2022%' THEN '01/08/2022'
+            WHEN DATA_INI LIKE '%09/2022%' THEN '01/09/2022'
+            WHEN DATA_INI LIKE '%10/2022%' THEN '01/10/2022'
+            WHEN DATA_INI LIKE '%11/2022%' THEN '01/11/2022'
+            WHEN DATA_INI LIKE '%12/2022%' THEN '01/12/2022'
+        ELSE NULL   END DATA,     
+              
+SISTEMA,
+COMPLEMENTO_SISTEMA,
+(TO_DATE(DATA_FIM, 'DD/MM/YYYY') - TO_DATE(DATA_INI, 'DD/MM/YYYY'))   AS TMS,
+
+    CASE    WHEN (TO_DATE(DATA_FIM, 'DD/MM/YYYY') - TO_DATE(DATA_INI, 'DD/MM/YYYY')) IS NULL    THEN 'EM ATENDIMENTO'
+        ELSE 'FECHADO'   END STATUS,
+
+    CASE    WHEN (TO_DATE(DATA_FIM, 'DD/MM/YYYY') - TO_DATE(DATA_INI, 'DD/MM/YYYY')) <=7    THEN 'CUMPRIDO'
+            WHEN (TO_DATE(DATA_FIM, 'DD/MM/YYYY') - TO_DATE(DATA_INI, 'DD/MM/YYYY')) >7     THEN 'NÃO CUMPRIDO'
+            WHEN TO_DATE(HOJE, 'DD/MM/YYYY') - TO_DATE(DATA_INI, 'DD/MM/YYYY') = 7          THEN 'VENCE HOJE'
+            WHEN TO_DATE(HOJE, 'DD/MM/YYYY') - TO_DATE(DATA_INI, 'DD/MM/YYYY') <7           THEN 'DENTRO DO PRAZO'
+            WHEN TO_DATE(HOJE, 'DD/MM/YYYY') - TO_DATE(DATA_INI, 'DD/MM/YYYY') > 7          THEN 'FORA DO PRAZO'
+        ELSE NULL   END SLA,
+        
+COUNT (*) AS TOTAL
+
+FROM VIEW_PPFY_PSOFT
+
+GROUP BY DATA_INI, SISTEMA , DATA_FIM, DATA_INI , HOJE, COMPLEMENTO_SISTEMA )
+
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+--codigo final
+
+
+
+DROP TABLE TABLE_RELATORIO_SLA;
+ CREATE TABLE TABLE_RELATORIO_SLA AS (
+SELECT
+PROTOCOLO,
+TIPO,
+MOTIVO,
+SUBMOTIVO,
+PRODUTO,
+DATA_INI,
+DATA_FIM,
+
+--QUANTOS DIAS FECHADO OU ABERTO
+    CASE    WHEN DATA_FIM IS NOT NULL                   THEN (TO_DATE(DATA_FIM, 'DD/MM/YYYY') - TO_DATE(DATA_INI, 'DD/MM/YYYY'))
+            WHEN DATA_FIM IS  NULL                      THEN TO_DATE(HOJE, 'DD/MM/YYYY') - TO_DATE(DATA_INI, 'DD/MM/YYYY') 
+        ELSE NULL   END DIAS_SLA,
+
+    CASE    WHEN DATA_FIM IS NULL                                                   THEN 0
+            WHEN DATA_FIM IS NOT NULL AND 
+            ((TO_DATE(DATA_FIM, 'DD/MM/YYYY') - TO_DATE(DATA_INI, 'DD/MM/YYYY'))<=7)  THEN 1
+            WHEN DATA_FIM IS NOT NULL AND 
+            ((TO_DATE(DATA_FIM, 'DD/MM/YYYY') - TO_DATE(DATA_INI, 'DD/MM/YYYY'))>7)  THEN 0
+        ELSE NULL   END SLA_CUMPRIDO,
+            
+
+
+
+    CASE    WHEN DATA_FIM LIKE '%01/2022%' THEN '01/01/2022'
+            WHEN DATA_FIM LIKE '%02/2022%' THEN '01/02/2022'
+            WHEN DATA_FIM LIKE '%03/2022%' THEN '01/03/2022'
+            WHEN DATA_FIM LIKE '%04/2022%' THEN '01/04/2022'
+            WHEN DATA_FIM LIKE '%05/2022%' THEN '01/05/2022'
+            WHEN DATA_FIM LIKE '%06/2022%' THEN '01/06/2022'
+            WHEN DATA_FIM LIKE '%07/2022%' THEN '01/07/2022'
+            WHEN DATA_FIM LIKE '%08/2022%' THEN '01/08/2022'
+            WHEN DATA_FIM LIKE '%09/2022%' THEN '01/09/2022'
+            WHEN DATA_FIM LIKE '%10/2022%' THEN '01/10/2022'
+            WHEN DATA_FIM LIKE '%11/2022%' THEN '01/11/2022'
+            WHEN DATA_FIM LIKE '%12/2022%' THEN '01/12/2022'
+            
+            WHEN (TO_DATE(DATA_FIM, 'DD/MM/YYYY') - TO_DATE(DATA_INI, 'DD/MM/YYYY')) IS NULL THEN CONCAT('01',SUBSTR(HOJE,3,8))
+        ELSE NULL   END DATA,     
+              
+SISTEMA,
+COMPLEMENTO_SISTEMA,
+(TO_DATE(DATA_FIM, 'DD/MM/YYYY') - TO_DATE(DATA_INI, 'DD/MM/YYYY'))   AS TMS,
+
+    CASE    WHEN (TO_DATE(DATA_FIM, 'DD/MM/YYYY') - TO_DATE(DATA_INI, 'DD/MM/YYYY')) IS NULL    THEN 'EM ATENDIMENTO'
+        ELSE 'FECHADO'   END STATUS,
+
+    CASE    WHEN (TO_DATE(DATA_FIM, 'DD/MM/YYYY') - TO_DATE(DATA_INI, 'DD/MM/YYYY')) <=7    THEN 'CUMPRIDO'
+            WHEN (TO_DATE(DATA_FIM, 'DD/MM/YYYY') - TO_DATE(DATA_INI, 'DD/MM/YYYY')) >7     THEN 'NÃO CUMPRIDO'
+            WHEN TO_DATE(HOJE, 'DD/MM/YYYY') - TO_DATE(DATA_INI, 'DD/MM/YYYY') = 7          THEN 'VENCE HOJE'
+            WHEN TO_DATE(HOJE, 'DD/MM/YYYY') - TO_DATE(DATA_INI, 'DD/MM/YYYY') <7           THEN 'DENTRO DO PRAZO'
+            WHEN TO_DATE(HOJE, 'DD/MM/YYYY') - TO_DATE(DATA_INI, 'DD/MM/YYYY') > 7          THEN 'FORA DO PRAZO'
+        ELSE NULL   END SLA
+        
+
+
+FROM VIEW_PPFY_PSOFT 
+WHERE (SISTEMA = 'PLUSOFT' AND TIPO LIKE '%N2%') OR (SISTEMA = 'PIPEFY')
+
+)
