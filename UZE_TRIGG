@@ -22,7 +22,8 @@ FROM TB_PIPEFY_UZE )
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-SELECT * FROM TB_PLUSOFT_TRIGG
+DELETE FROM TB_PLUSOFT_TRIGG
+WHERE "DATA_REGISTRO_OCORRENCIA" LIKE '%10/2022%'
 
 
 INSERT INTO TB_PLUSOFT_TRIGG (
@@ -220,17 +221,19 @@ GROUP BY DATA_INI, SISTEMA , DATA_FIM, DATA_INI , HOJE, COMPLEMENTO_SISTEMA )
 --codigo final
 
 
-
-DROP TABLE TABLE_RELATORIO_SLA;
- CREATE TABLE TABLE_RELATORIO_SLA AS (
-SELECT
+DROP VIEW VIEW_RELATORIO_SLA_SAC;
+ CREATE VIEW VIEW_RELATORIO_SLA_SAC AS (
+SELECT DISTINCT 
 PROTOCOLO,
 TIPO,
 MOTIVO,
 SUBMOTIVO,
 PRODUTO,
 DATA_INI,
-DATA_FIM,
+
+    CASE    WHEN DATA_FIM IS NOT NULL                   THEN DATA_FIM
+            WHEN DATA_FIM IS NULL                       THEN HOJE
+        ELSE NULL   END DATA_FIM,
 
 --QUANTOS DIAS FECHADO OU ABERTO
     CASE    WHEN DATA_FIM IS NOT NULL                   THEN (TO_DATE(DATA_FIM, 'DD/MM/YYYY') - TO_DATE(DATA_INI, 'DD/MM/YYYY'))
@@ -277,8 +280,6 @@ COMPLEMENTO_SISTEMA,
             WHEN TO_DATE(HOJE, 'DD/MM/YYYY') - TO_DATE(DATA_INI, 'DD/MM/YYYY') > 7          THEN 'FORA DO PRAZO'
         ELSE NULL   END SLA
         
-
-
 FROM VIEW_PPFY_PSOFT 
 WHERE (SISTEMA = 'PLUSOFT' AND TIPO LIKE '%N2%') OR (SISTEMA = 'PIPEFY')
 

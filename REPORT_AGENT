@@ -1,19 +1,43 @@
 -- Tabelas de Apoio
 
-SELECT * FROM 
+SELECT * FROM TB_SALESFORCE_TODAS_CENTRAIS          --BASE ALIMENTADA MANUALMENTE DIARIAMENTE
+SELECT * FROM TB_OMD_GERAL                          --BASE ALIMENTADA MANUALMENTE DIARIAMENTE
+SELECT * FROM TB_PLUSOFT_TRIGG                      --BASE ALIMENTADA MANUALMENTE DIARIAMENTE
+SELECT * FROM CLIENTES@DW                           --BASE AUTOMATICA DO SISTEMA OMNI
+SELECT * FROM CONTRATOS@DW                          --BASE AUTOMATICA DO SISTEMA OMNI
+SELECT * FROM APOIO_CEDENTE                         --MANUTENÇÃO MANUAL
+SELECT * FROM APOIO_PRODUTO                         --MANUTENÇÃO MANUAL
+SELECT * FROM APOIO_AGENTE                          --MANUTENÇÃO MANUAL
+SELECT * FROM VW_CANAL_DIRETO
 
 -- Tabelas Unificadas
 
-SELECT * FROM 
+SELECT * FROM VIEW_SF_OMD_PLUSOFT
+SELECT * FROM TABLE_SF_OMD_PLUSOFT
 
 -- Tabelas/View criadas
 
-SELECT * FROM VIEW_SF_OMD_PLUSOFT
+SELECT * FROM VIEW_REPORT_AGENTE
+
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--TRANSFORMANDO VIEW EM TABELAS PARA CARREGAR MAIS RAPIDO OS PROCESSOS
+
+DROP TABLE TABLE_SF_OMD_PLUSOFT;
+CREATE TABLE TABLE_SF_OMD_PLUSOFT AS (SELECT DISTINCT * FROM VIEW_SF_OMD_PLUSOFT )
+
+
+DROP TABLE TABLE_REPORT_AGENTE;
+CREATE TABLE TABLE_REPORT_AGENTE AS (SELECT DISTINCT * FROM VIEW_REPORT_AGENTE )
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--UNIAO DAS BASES SALESFORCE | OMD | PLUSOFT
 CREATE VIEW VIEW_SF_OMD_PLUSOFT AS (
     SELECT 
         CASE    WHEN A."NUMERO DO PROTOCOLO" IS NOT NULL            THEN 'SALESFORCE'
@@ -46,62 +70,219 @@ CREATE VIEW VIEW_SF_OMD_PLUSOFT AS (
                 WHEN C."Tipo de ocorrência" IS NOT NULL             THEN C."Tipo de ocorrência"
             ELSE NULL   END TIPO                                                            ,
     
-    CASE    WHEN A.MOTIVO IS NOT NULL                           THEN A.MOTIVO
-            WHEN B.ASSUNTOS IS NOT NULL                         THEN B.ASSUNTOS
-            WHEN C."Grupo de tipo de ocorrência" IS NOT NULL    THEN C."Grupo de tipo de ocorrência"  
-        ELSE NULL   END MOTIVO,
+        CASE    WHEN A.MOTIVO IS NOT NULL                           THEN A.MOTIVO
+                WHEN B.ASSUNTOS IS NOT NULL                         THEN B.ASSUNTOS
+                WHEN C."Grupo de tipo de ocorrência" IS NOT NULL    THEN C."Grupo de tipo de ocorrência"  
+            ELSE NULL   END MOTIVO                                                          ,
 
-    CASE    WHEN A."SUB-MOTIVO" IS NOT NULL                     THEN A."SUB-MOTIVO" 
-            WHEN C."Ocorrência" IS NOT NULL                     THEN C."Ocorrência"
-        ELSE NULL   END SUBMOTIVO,
+        CASE    WHEN A."SUB-MOTIVO" IS NOT NULL                     THEN A."SUB-MOTIVO" 
+                WHEN C."Ocorrência" IS NOT NULL                     THEN C."Ocorrência"
+            ELSE NULL   END SUBMOTIVO                                                       ,
     
-    CASE    WHEN A.CENTRAL LIKE '%CR%'                          THEN 'CR'
-            WHEN A.CENTRAL LIKE '%SAC%'                         THEN 'SAC'
-            WHEN B.CANAL = 'Sites de reputação'                 THEN B.CLASSIFICACAO
-            WHEN B.CANAL IS NOT NULL                            THEN B.CANAL
-            WHEN C."Forma de contato" IS NOT NULL               THEN C."Forma de contato"
-        ELSE NULL   END CANAL,
+        CASE    WHEN A.CENTRAL LIKE '%CR%'                          THEN 'CR'
+                WHEN A.CENTRAL LIKE '%SAC%'                         THEN 'SAC'
+                WHEN B.CANAL = 'Sites de reputação'                 THEN B.CLASSIFICACAO
+                WHEN B.CANAL IS NOT NULL                            THEN B.CANAL
+                WHEN C."Forma de contato" IS NOT NULL               THEN C."Forma de contato"
+            ELSE NULL   END CANAL                                                           ,
     
-    A.CEDENTE,
+        A.CEDENTE                                                                           ,
         
-    CASE    WHEN A.PRODUTO IS NOT NULL                          THEN UPPER(A.PRODUTO)
-            WHEN C."Número do atendimento" IS NOT NULL          THEN 'TRIGG'
-            WHEN B.PRODUTOS IS NOT NULL                         THEN UPPER(B.PRODUTOS)
-        ELSE '-'    END PRODUTO,
+        CASE    WHEN A.PRODUTO IS NOT NULL                          THEN UPPER(A.PRODUTO)
+                WHEN C."Número do atendimento" IS NOT NULL          THEN 'TRIGG'
+                WHEN B.PRODUTOS IS NOT NULL                         THEN UPPER(B.PRODUTOS)
+            ELSE '-'    END PRODUTO                                                         ,
     
-    CASE    WHEN A."PRODUTO DO CONTRATO" IS NOT NULL            THEN UPPER(A."PRODUTO DO CONTRATO")
-            WHEN C."Número do atendimento" IS NOT NULL          THEN 'TRIGG'
-        ELSE '-'    END PRODUTO_CONTRATO,    
+        CASE    WHEN A."PRODUTO DO CONTRATO" IS NOT NULL            THEN UPPER(A."PRODUTO DO CONTRATO")
+                WHEN C."Número do atendimento" IS NOT NULL          THEN 'TRIGG'
+            ELSE '-'    END PRODUTO_CONTRATO                                                ,    
         
-    CASE    WHEN A."COD AGENTE RESPONSAVEL" IS NOT NULL         THEN A."COD AGENTE RESPONSAVEL"
-            WHEN B.UNIDADE_OCORRENCIA IS NOT NULL               THEN UPPER(B.UNIDADE_OCORRENCIA)
-            WHEN C."Número do atendimento" IS NOT NULL          THEN 'TRIGG'
-        ELSE '-'    END COD_AGENTE,
+        CASE    WHEN A."COD AGENTE RESPONSAVEL" IS NOT NULL         THEN A."COD AGENTE RESPONSAVEL"
+                WHEN B.UNIDADE_OCORRENCIA IS NOT NULL               THEN UPPER(B.UNIDADE_OCORRENCIA)
+                WHEN C."Número do atendimento" IS NOT NULL          THEN 'TRIGG'
+            ELSE '-'    END COD_AGENTE                                                      ,
     
-    CASE    WHEN A."AGENTE RESPONSAVEL" IS NOT NULL             THEN UPPER(A."AGENTE RESPONSAVEL")
-            WHEN C."Número do atendimento" IS NOT NULL          THEN 'TRIGG'
-        ELSE '-'    END AGENTE_RESP 
+        CASE    WHEN A."AGENTE RESPONSAVEL" IS NOT NULL             THEN UPPER(A."AGENTE RESPONSAVEL")
+                WHEN C."Número do atendimento" IS NOT NULL          THEN 'TRIGG'
+            ELSE '-'    END AGENTE_RESP 
 
-FROM TB_SALESFORCE_TODAS_CENTRAIS A
+    FROM TB_SALESFORCE_TODAS_CENTRAIS A
 
-FULL JOIN TB_OMD_GERAL B
-    ON A."NUMERO DO PROTOCOLO" = B.COD_MANIFESTACAO
+    FULL JOIN TB_OMD_GERAL B
+        ON A."NUMERO DO PROTOCOLO" = B.COD_MANIFESTACAO
 
-FULL JOIN TB_PLUSOFT_TRIGG C
-    ON A."NUMERO DO PROTOCOLO" = C."Número do atendimento"
+    FULL JOIN TB_PLUSOFT_TRIGG C
+        ON A."NUMERO DO PROTOCOLO" = C."Número do atendimento"
 
-LEFT JOIN CLIENTES@DW CLI
-    ON REPLACE(REPLACE(B.CPF, '-',''), '.','') = CLI.CPF_CGC
+    LEFT JOIN CLIENTES@DW CLI
+        ON REPLACE(REPLACE(B.CPF, '-',''), '.','') = CLI.CPF_CGC
 
-LEFT JOIN CONTRATOS@DW CTT
-    ON CLI.CODIGO = CTT.CLIENTE )
+    LEFT JOIN CONTRATOS@DW CTT
+        ON CLI.CODIGO = CTT.CLIENTE 
+)
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+DROP VIEW VIEW_REPORT_AGENTE;
+CREATE VIEW VIEW_REPORT_AGENTE AS (
+    SELECT A.*,
+
+        CASE    WHEN A.SISTEMA = 'TRIGG'                    THEN 'TRIGG'
+                WHEN AP_C.BU IS NOT NULL                    THEN AP_C.BU
+                WHEN AP_P.BU IS NOT NULL                    THEN AP_P.BU
+                
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'VEICULO LEVE'                           THEN 'VEICULO LEVE'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'MOTO'                                   THEN 'MOTO'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'VEICULO PESADO'                         THEN 'VEICULO PESADO'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'CP E REFIN'                             THEN 'CP'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'MICROCRÉDITO - AVANTE'                  THEN 'MICROCRÉDITO'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'MICROCRÉDITO - MICROMAIS'               THEN 'MICROCRÉDITO'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'SEGUROS'                                THEN 'SEGUROS'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'NPL BV'                                 THEN 'NPL BV'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'NPL BV FINANCEIRA'                      THEN 'NPL BV'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'NPL BMG'                                THEN 'NPL BMG'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'NPL - CARREFOURG'                       THEN 'NPL CARREFOUR'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'NPL - CARREFOUR'                        THEN 'NPL CARREFOUR'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'NPL CEF'                                THEN 'NPL CEF'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'NPL CETELEM'                            THEN 'NPL CETELEM'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'NPL SANTADER'                           THEN 'NPL SANTANDER'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'NPL PECUNIA'                            THEN 'NPL PECUNIA'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'BANCO'                                  THEN 'NEGOCIOS DIGITAIS'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'MOVA'                                   THEN 'MOVA'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO LIKE '%TRIGG%'                             THEN 'TRIGG'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'FINSOL'                                 THEN 'FINSOL'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'CARTÃO - PAGBEM'                        THEN 'PAGBEM'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'CARTÃO - BEBLUE'                        THEN 'BEBLUE'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'CARTÃO DE CRÉDITO - UZE'    AND
+                                        A.COD_AGENTE LIKE '%TRIGG%'                             THEN 'TRIGG'                
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'CARTÃO DE CRÉDITO - UZE'    AND
+                                        A.COD_AGENTE = 'PRODUTOS PL'                            THEN 'UZE CONSTRUCAO'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'CARTÃO DE CRÉDITO - UZE'                THEN 'UZE NORTE'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'CARTÃO DE CRÉDITO - OMNI FÁCIL VISA'    THEN 'UZE NORTE'
+                WHEN A.COD_AGENTE = 'UZE CARTOES'                                               THEN 'UZE NORTE'
+                WHEN A.COD_AGENTE = 'SAC - CARTOES'                                             THEN 'UZE NORTE'
+                WHEN A.COD_AGENTE = 'PRODUTOS PL'                                               THEN 'UZE CONSTRUCAO'
+                WHEN A.COD_AGENTE = 'TRIGG'                                                     THEN 'TRIGG'
+                WHEN A.COD_AGENTE = 'TRIGG'                                                     THEN 'BKOBIZTRIGG'
+                WHEN A.COD_AGENTE = 'BU VAREJO PF'                                              THEN 'NEGOCIOS DIGITAIS'
+                WHEN A.COD_AGENTE = 'BU CDC LOJA'                                               THEN 'CDC LOJA'
+                WHEN A.COD_AGENTE = 'BU MOTO'                                                   THEN 'MOTO'
+                WHEN A.COD_AGENTE = 'MOVA'                                                      THEN 'MOVA'
+                WHEN A.COD_AGENTE = 'BU - VEICULOS'                                             THEN 'VEICULO LEVE'
+                WHEN A.PRODUTO = 'UNIDADE DE NEGOCIOS - LEASING'                                THEN 'LEASING'
+                WHEN A.COD_AGENTE = 'SEG' OR A.COD_AGENTE = 'OUV' OR A.COD_AGENTE = 'NENHU'     THEN '-'                       
+            ELSE NULL   END BU                                                              ,
+
+        CASE    WHEN A.SISTEMA = 'TRIGG'                    THEN 'TRIGG'
+                WHEN AP_C."BU SERVIÇO" IS NOT NULL          THEN AP_C."BU SERVIÇO"
+                WHEN AP_P."BU SERVIÇO"  IS NOT NULL         THEN AP_P."BU SERVIÇO" 
+                
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'VEICULO LEVE'                           THEN 'FINANCEIRA'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'MOTO'                                   THEN 'FINANCEIRA'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'VEICULO PESADO'                         THEN 'FINANCEIRA'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'CP E REFIN'                             THEN 'FINANCEIRA'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'MICROCRÉDITO - AVANTE'                  THEN 'FINANCEIRA'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'MICROCRÉDITO - MICROMAIS'               THEN 'FINANCEIRA'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'SEGUROS'                                THEN 'FINANCEIRA NPL'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'NPL BV FINANCEIRA'                      THEN 'FINANCEIRA NPL'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'NPL BV'                                 THEN 'FINANCEIRA NPL'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'NPL BMG'                                THEN 'FINANCEIRA NPL'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'NPL - CARREFOURG'                       THEN 'FINANCEIRA NPL'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'NPL - CARREFOUR'                        THEN 'FINANCEIRA NPL'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'NPL CEF'                                THEN 'FINANCEIRA NPL'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'NPL CETELEM'                            THEN 'FINANCEIRA NPL'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'NPL SANTADER'                           THEN 'FINANCEIRA NPL'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'NPL PECUNIA'                            THEN 'FINANCEIRA NPL'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'BANCO'                                  THEN 'NEGOCIOS DIGITAIS'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'MOVA'                                   THEN 'MOVA'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO LIKE '%TRIGG%'                             THEN 'TRIGG'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'FINSOL'                                 THEN 'FINSOL'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'CARTÃO - PAGBEM'                        THEN 'PAGBEM'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'CARTÃO - BEBLUE'                        THEN 'BEBLUE'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'CARTÃO DE CRÉDITO - UZE'                THEN 'CARTOES'
+                WHEN A.SISTEMA = 'OMD' AND A.PRODUTO = 'CARTÃO DE CRÉDITO - OMNI FÁCIL VISA'    THEN 'CARTOES'
+                WHEN A.COD_AGENTE = 'PRODUTOS PL'                                               THEN 'CARTOES'
+                WHEN A.COD_AGENTE = 'UZE CARTOES'                                               THEN 'CARTOES'
+                WHEN A.COD_AGENTE = 'TRIGG'                                                     THEN 'CARTOES'
+                WHEN A.COD_AGENTE = 'SAC - CARTOES'                                             THEN 'CARTOES'
+                WHEN A.COD_AGENTE = 'BU VAREJO PF'                                              THEN 'NEGOCIOS DIGITAIS'
+                WHEN A.COD_AGENTE = 'BU CDC LOJA'                                               THEN 'FINANCEIRA'
+                WHEN A.COD_AGENTE = 'BU CDC LOJA'                                               THEN 'FINANCEIRA'
+                WHEN A.COD_AGENTE = 'MOVA'                                                      THEN 'MOVA'
+                WHEN A.COD_AGENTE = 'BU - VEICULOS'                                             THEN 'FINANCEIRA'
+                WHEN A.PRODUTO = 'UNIDADE DE NEGOCIOS - LEASING'                                THEN 'LEASING'
+                WHEN A.COD_AGENTE = 'TRIGG'                                                     THEN 'CARTOES'
+                WHEN A.COD_AGENTE = 'SEG' OR A.COD_AGENTE = 'OUV' OR A.COD_AGENTE = 'NENHU'     THEN '-'                  
+            ELSE NULL   END BU_SERVICO                                                      ,
+    
+        AP_AG.NOME_AGENTE                                                                   ,
+        AP_AG.GRUPO                                                                         ,
+        AP_AG.TIPO                                      AS CORRESPONDENTE                   ,
+    
+        CASE WHEN CD.DESCRICAO IS NOT NULL                  THEN 'CANAL DIRETO'
+            ELSE '-'    END  CANAL_DIRETO
+
+    FROM TABLE_SF_OMD_PLUSOFT A
+
+    LEFT JOIN APOIO_CEDENTE AP_C
+        ON A.CEDENTE = AP_C.CEDENTE
+
+    LEFT JOIN APOIO_PRODUTO AP_P
+        ON  UPPER(A.PRODUTO) = UPPER(AP_P.PRODUTO)
+        AND UPPER(A.PRODUTO_CONTRATO) = UPPER(AP_P.PRODUTO_CONTRATO)
+
+    LEFT JOIN APOIO_AGENTE AP_AG
+        ON UPPER(A.COD_AGENTE) = UPPER(AP_AG.COD_AGENTE)
+
+    LEFT JOIN VW_CANAL_DIRETO CD
+        ON A.CONTRATO = CD.CONTRATO 
+    
+    WHERE   (((A.CANAL = 'Reclame Aqui' AND A.SISTEMA = 'TRIGG') OR
+            (UPPER(A.TIPO) LIKE '%RECLAMAÇÃO%') OR 
+            (UPPER(A.TIPO) LIKE '%OUVIDORIA%')) AND
+            DATA LIKE '%2022%')          
+)
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-    ----------------------------------------------------------------
 
-    DROP TABLE TB_SF_OMD_PLUSOFT;
-CREATE TABLE TB_SF_OMD_PLUSOFT AS (
-SELECT DISTINCT * FROM VIEW_SF_OMD_PLUSOFT )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -253,3 +434,62 @@ SELECT * FROM TB_OMD_GERAL
 
 SELECT * FROM TB_PLUSOFT_TRIGG
 SELECT * FROM VW_CANAL_DIRETO
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+SELECT DISTINCT  TIPO FROM TABLE_REPORT_AGENTE
+WHERE SISTEMA = ''
+
+select * from TB_SF_OMD_PLUSOFT
+
+SELECT * FROM TABLE_REPORT_AGENTE
+--WHERE COD_AGENTE  = '2952'
+WHERE NOME_AGENTE IS NULL
+
+
+
+DROP TABLE TABLE_REPORT_AGENTE;
+
+CREATE TABLE TABLE_REPORT_AGENTE AS (
+SELECT A.*,
+
+    CASE    WHEN A.SISTEMA = 'TRIGG'                    THEN 'TRIGG'
+            WHEN AP_C.BU IS NOT NULL                    THEN AP_C.BU
+            WHEN AP_P.BU IS NOT NULL                    THEN AP_P.BU
+        ELSE NULL   END BU,
+
+    CASE    WHEN A.SISTEMA = 'TRIGG'                    THEN 'TRIGG'
+            WHEN AP_C."BU SERVIÇO" IS NOT NULL          THEN AP_C."BU SERVIÇO"
+            WHEN AP_P."BU SERVIÇO"  IS NOT NULL         THEN AP_P."BU SERVIÇO" 
+        ELSE NULL   END BU_SERVICO,
+    
+    AP_AG.NOME_AGENTE,
+    AP_AG.GRUPO,
+    AP_AG.TIPO      AS CORRESPONDENTE,
+    
+    CASE WHEN CD.DESCRICAO IS NOT NULL                  THEN 'CANAL DIRETO'
+        ELSE "-"    END  CANAL_DIRETO
+
+FROM TB_SF_OMD_PLUSOFT A
+
+LEFT JOIN APOIO_CEDENTE AP_C
+    ON A.CEDENTE = AP_C.CEDENTE
+
+LEFT JOIN APOIO_PRODUTO AP_P
+    ON  UPPER(A.PRODUTO) = UPPER(AP_P.PRODUTO)
+    AND UPPER(A.PRODUTO_CONTRATO) = UPPER(AP_P.PRODUTO_CONTRATO)
+
+LEFT JOIN APOIO_AGENTE AP_AG
+    ON UPPER(A.COD_AGENTE) = UPPER(AP_AG.COD_AGENTE)
+
+LEFT JOIN VW_CANAL_DIRETO CD
+    ON A.CONTRATO = CD.CONTRATO 
+    
+WHERE   ((A.CANAL = 'Reclame Aqui' AND A.SISTEMA = 'TRIGG') OR
+        (UPPER(A.TIPO) LIKE '%RECLAMAÇÃO%') OR 
+        (UPPER(A.TIPO) LIKE '%OUVIDORIA%')) AND
+        DATA LIKE '%2022%'
+    )
