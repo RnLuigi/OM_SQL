@@ -1,0 +1,523 @@
+
+-- Tabelas de apoio
+
+SELECT * FROM TB_SALESFORCE_TODAS_CENTRAIS
+SELECT * FROM TB_OMD_GERAL
+SELECT * FROM TB_PLUSOFT_TRIGG
+SELECT * FROM TB_PIPEFY_UZE
+SELECT * FROM TB_VISAO_CHAT
+SELECT * FROM TB_PESQ_CHAT_2022
+SELECT * FROM TB_NPS_2N
+SELECT * FROM TB_NPS_EMAIL
+SELECT * FROM TB_CES_2N
+SELECT * FROM TB_CSAT_2N
+
+SELECT * FROM APOIO_AGENTE
+SELECT * FROM APOIO_PRODUTO
+--SELECT * FROM APOIO_CENTRAL
+--SELECT * FROM APOIO_HORA
+
+
+-- Tabelas/View criadas
+SELECT * FROM VIEW_SALESFORCE_GERAL     --TABELA SALESFORCE
+SELECT * FROM VIEW_OMD_GERAL            --TABELA OMD
+SELECT * FROM VIEW_PIPEFY_UZE           --TABELA PIPEFY
+SELECT * FROM VIEW_PLUSOFT_GERAL        --TABELA PLUSOFT
+SELECT * FROM VIEW_BASE_SISTEMA_GERAL   --BASE GERAL DOS SISTEMAS
+SELECT * FROM VW_CANAL_DIRETO           --BASE CANAL DIRETO
+SELECT * FROM VIEW_BASE_GERAL_CHAT_2N   --BASE COM CHAT E 2 NIVEL
+SELECT * FROM VIEW_BASES_FINAL
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--INDICE
+
+--INDICE DO PROTOCOLO DO SALESFORCE
+CREATE INDEX IDX_SF_GERAL
+ON TB_SALESFORCE_TODAS_CENTRAIS ("NUMERO DO PROTOCOLO")
+
+--INDICE DO CODIGO MANIFESTACAO OMD
+CREATE INDEX IDX_SF_GERAL
+ON TB_SALESFORCE_TODAS_CENTRAIS ("NUMERO DO PROTOCOLO")
+
+--INDICE DO PROTOCOLO PIPEFY
+CREATE INDEX IDX_PIPEFY_GERAL
+ON TB_PIPEFY_UZE (PROTOCOLO)
+
+--INDICE DO PROTOCOLO PLUSOFT
+CREATE INDEX IDX_PLUSOFT_GERAL
+ON TB_PLUSOFT_TRIGG ("Número do atendimento")
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+CREATE VIEW VIEW_SALESFORCE_GERAL AS (
+    SELECT 
+        DATA_REF                                                                        AS DATA_INICIO, 
+        (SUBSTR("DATA/HORA DE ABERTURA",15,2)*60) + 
+            (SUBSTR("DATA/HORA DE ABERTURA",12,2)*60*60)                                AS HORA_INICIO,
+        SUBSTR("DATA/HORA DE FECHAMENTO",1,10)                                          AS DATA_FIM,
+        (SUBSTR("DATA/HORA DE FECHAMENTO",15,2)*60) + 
+            (SUBSTR("DATA/HORA DE FECHAMENTO",12,2)*60*60)                              AS HORA_FIM,
+--"AGENTE DE ORIGEM", 
+--"ALTO ATRITO", 
+--"BKO - IMPROCEDENTE", 
+        UPPER(CEDENTE)                                                                  AS BU_CEDENTE, 
+        CONTRATO, 
+        "AGENTE RESPONSAVEL"                                                            AS AGENTE_RESPONSAVEL, 
+        "COD AGENTE RESPONSAVEL"                                                        AS AGENTE_CODIGO, 
+        "NUMERO DO PROTOCOLO"                                                           AS PROTOCOLO, 
+        CASE    WHEN "NOME DA CONTA CPF" IS NOT NULL    THEN REPLACE(REPLACE("NOME DA CONTA CPF",'-',''),'.','')
+                WHEN CPF IS NOT NULL                    THEN REPLACE(REPLACE(CPF,'-',''),'.','')
+            ELSE NULL   END CPF,
+--"NOME DA CONTA CPF", 
+        "NAO CLIENTE"                                                                   AS NAO_CLIENTE, 
+--CPF, 
+        UPPER(CENTRAL)                                                                  AS CENTRAL, 
+--"DATA/HORA DE ABERTURA", 
+--"DATA/HORA DE FECHAMENTO", 
+        UPPER("PROPRIETARIO PROTOCOLO")                                                 AS PROPRIETARIO_PROTOCOLO, 
+        UPPER("CRIADO POR")                                                             AS CRIADO_POR, 
+        UPPER("FECHADO PELO USUARIO")                                                   AS FECHADO_POR, 
+        UPPER(TIPO)                                                                     AS TIPO, 
+        UPPER(MOTIVO)                                                                   AS MOTIVO, 
+        UPPER("SUB-MOTIVO")                                                             AS SUBMOTIVO, 
+        UPPER(PRODUTO)                                                                  AS PRODUTO, 
+        UPPER("PRODUTO DO CONTRATO")                                                    AS PRODUTO_CONTRATO, 
+        UPPER("ORIGEM DO PROTOCOLO")                                                    AS ORIGEM_ATENDIMENTO, 
+        STATUS, 
+--"CRIADO POR_", 
+--"PRIMEIRO ATENDIMENTO", 
+--EMAIL, 
+        CANAL,
+        CASE    WHEN "NUMERO DO PROTOCOLO" IS NOT NULL      THEN 'SALESFORCE'       ELSE NULL       END SISTEMA
+
+    FROM TB_SALESFORCE_TODAS_CENTRAIS)
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+CREATE VIEW VIEW_OMD_GERAL AS(
+    SELECT 
+        TO_CHAR(TO_DATE(DATA_REF, 'DD/MM/YY'), 'DD/MM/YYYY')                            AS DATA_INICIO, 
+--RECEBIMENTO, 
+        TO_CHAR(TO_DATE(PRAZO_MANIFESTACAO, 'DD/MM/YY'), 'DD/MM/YYYY')                  AS DATA_PRAZO_CONCLUSAO, 
+        TO_CHAR(TO_DATE(PRAZO_CONCLUSAO, 'DD/MM/YY'), 'DD/MM/YYYY')                     AS DATA_CONCLUSAO, 
+        UPPER(FORMA_ENTRADA)                                                            AS FORMA_ENTRADA, 
+        UPPER(MANIFESTANTE)                                                             AS MANIFESTANTE, 
+--NOME_TERCEIRO, 
+--CONTATO, 
+        UPPER(CLASSIFICACAO)                                                            AS CLASSIFICACAO, 
+        COD_MANIFESTACAO                                                                AS PROTOCOLO, 
+--MANIFESTACAO_ANTERIOR, 
+        UPPER(PRODUTOS)                                                                 AS PRODUTO, 
+        UPPER(ASSUNTOS)                                                                 AS MOTIVO, 
+        TO_CHAR(DESCRICAO)                                                              AS DESCRICAO, 
+        UPPER(NOME)                                                                     AS NOME,
+
+        CASE    WHEN CPF <> '-'             THEN REPLACE(REPLACE(CPF,'-',''),'.','')
+                WHEN CNPJ <> '-'            THEN REPLACE(REPLACE(CNPJ,'-',''),'.','')
+        ELSE NULL   END CPF_CNPJ,
+
+--CPF, 
+--CNPJ, 
+--RAZAO_SOCIAL, 
+--ESTADO, 
+--MUNICIPIO, 
+--BAIRRO, 
+        UPPER(UNIDADE_OCORRENCIA)                                                       AS UNIDADE_OCORRENCIA, 
+--STATUS, 
+--PRIORIDADE, 
+        RESULTADO, 
+        FINALIZACAO, 
+--PRAZO_CONCLUSAO, 
+--ORIGEM, 
+--INSTITUICAO, 
+        UPPER(CANAL)                                                                    AS CANAL, 
+        UPPER(ANALISTA)                                                                 AS ANALISTA,
+--VALOR_PERDA_FINANCEIRA, 
+--QUEM_CAUSOU, 
+--JUSTIFICATIVA, 
+--EMAIL_1, 
+--EMAIL_2
+        CASE    WHEN COD_MANIFESTACAO IS NOT NULL   THEN 'OMD'
+            ELSE NULL   END SISTEMA
+
+FROM TB_OMD_GERAL )
+
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--TRIGG
+
+INSERT INTO TB_PLUSOFT_TRIGG (
+
+"Número do atendimento", 
+"CPF/CNPJ", 
+"COD_INTERNO_OCORRENCIA", 
+"DATA_REGISTRO_OCORRENCIA", 
+"DATA_PREVISAO_OCORRENCIA", 
+"DATA_CONCLUSAO", 
+"Categoria de assunto", 
+"Forma de contato", 
+"Grupo de assunto", 
+"Assunto", 
+"Tipo de ocorrência", 
+"Grupo de tipo de ocorrência", 
+"Ocorrência", 
+"Nome do atendente", 
+"Time", 
+"USR_ENCERRAMENTO_OCO"
+)
+
+SELECT * FROM TB_PLUSOFT_TRIGG_
+
+---------------------------------------------------------------------------------------------------------
+
+DROP TABLE TB_PLUSOFT_TRIGG_
+
+
+---------------------------------------------------------------------------------------------------------
+
+
+
+CREATE VIEW VIEW_PLUSOFT_GERAL AS (
+    SELECT 
+        "Número do atendimento"                                                         AS PROTOCOLO, 
+        "CPF/CNPJ"                                                                      AS CPF_CNPJ, 
+        "COD_INTERNO_OCORRENCIA"                                                        AS PROTOCOLO_INTERNO, 
+        SUBSTR("DATA_REGISTRO_OCORRENCIA",1,10)                                         AS DATA_INICIO,
+        SUBSTR("DATA_REGISTRO_OCORRENCIA",12,2)*60*60 +
+            SUBSTR("DATA_REGISTRO_OCORRENCIA",15,2)*60                                  AS HORA_INICIO,
+        SUBSTR("DATA_PREVISAO_OCORRENCIA",1,10)                                         AS DATA_PRAZO_CONCLUSAO,
+        SUBSTR("DATA_PREVISAO_OCORRENCIA",12,2)*60*60 +
+            SUBSTR("DATA_PREVISAO_OCORRENCIA",15,2)*60                                  AS HORA_PRAZO_CONCLUSAO,
+        SUBSTR("DATA_CONCLUSAO",1,10)                                                   AS DATA_CONCLUSAO,
+        SUBSTR("DATA_CONCLUSAO",12,2)*60*60 +
+            SUBSTR("DATA_CONCLUSAO",15,2)*60                                            AS HORA_CONCLUSAO,
+        UPPER("Categoria de assunto")                                                   AS PRODUTO, 
+        UPPER("Forma de contato")                                                       AS CANAL, 
+        UPPER("Grupo de assunto")                                                       AS CENTRAL, 
+        UPPER("Assunto")                                                                AS PRODUTO_CONTRATO, 
+        UPPER("Tipo de ocorrência")                                                     AS TIPO, 
+        UPPER("Grupo de tipo de ocorrência")                                            AS MOTIVO, 
+        UPPER("Ocorrência")                                                             AS SUBMOTIVO, 
+        UPPER("Nome do atendente")                                                      AS CRIADO_POR, 
+        UPPER("Time")                                                                   AS ATENDIMENTO, 
+        UPPER("USR_ENCERRAMENTO_OCO")                                                   AS FINALIZADO_POR,
+        CASE    WHEN "Número do atendimento"   IS NOT NULL      THEN 'PLUSOFT'
+            ELSE NULL   END SISTEMA
+
+    FROM TB_PLUSOFT_TRIGG )
+
+
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--BASE UZE PIPEFY
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+DELETE FROM TB_PIPEFY_UZE WHERE DATA_HR_INI LIKE '%/2022%'; 
+
+INSERT INTO TB_PIPEFY_UZE (
+PROTOCOLO, DATA_HR_INI, CPF, DATA_HR_FIM, OPERADOR, STATUS, PRODUTO, MOTIVO, TIPO )
+SELECT * FROM TB_PIPEFY_UZE_;
+
+DROP TABLE TB_PIPEFY_UZE_;
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+CREATE VIEW VIEW_PIPEFY_UZE AS (
+    SELECT DISTINCT
+        PROTOCOLO, 
+        SUBSTR(DATA_HR_INI,1,10)                    AS DATA_INI,
+        SUBSTR(DATA_HR_INI,12,2)*60*60 +
+            SUBSTR(DATA_HR_INI,15,2)*60 +
+                SUBSTR(DATA_HR_INI,18,2)            AS HR_INI,        
+        SUBSTR(DATA_HR_FIM,1,10)                    AS DATA_FIM,    
+        SUBSTR(DATA_HR_FIM,12,2)*60*60 +
+            SUBSTR(DATA_HR_FIM,15,2)*60 +
+                SUBSTR(DATA_HR_FIM,18,2)            AS HR_FIM, 
+        REPLACE(REPLACE(CPF, '-',''), '.','')       AS CPF  , 
+        UPPER (OPERADOR)                            AS OPERADOR, 
+        UPPER (STATUS)                              AS STATUS, 
+        UPPER (PRODUTO)                             AS PRODUTO, 
+        UPPER (MOTIVO)                              AS MOTIVO, 
+        UPPER (TIPO)                                AS TIPO,
+        CASE WHEN PROTOCOLO IS NOT NULL   THEN 'PIPEFY' ELSE NULL END SISTEMA
+    FROM TB_PIPEFY_UZE 
+)
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--BASE GERAL DOS SISTEMAS
+
+CREATE VIEW VIEW_BASE_SISTEMA_GERAL AS (
+    SELECT 
+        CASE    WHEN A.DATA_INICIO IS NOT NULL                  THEN A.DATA_INICIO
+                WHEN B.DATA_INICIO IS NOT NULL                  THEN B.DATA_INICIO
+                WHEN C.DATA_INICIO IS NOT NULL                  THEN C.DATA_INICIO
+                WHEN D.DATA_INI IS NOT NULL                     THEN D.DATA_INI
+            ELSE NULL   END DATA_INICIO,
+        CASE    WHEN A.HORA_INICIO IS NOT NULL                  THEN A.HORA_INICIO
+                WHEN C.HORA_INICIO IS NOT NULL                  THEN C.HORA_INICIO
+                WHEN D.HR_INI IS NOT NULL                       THEN D.HR_INI
+            ELSE NULL   END HORA_INICIO,                    
+        CASE    WHEN A.DATA_FIM IS NOT NULL                     THEN A.DATA_FIM
+                WHEN B.DATA_CONCLUSAO IS NOT NULL               THEN B.DATA_CONCLUSAO
+                WHEN C.DATA_CONCLUSAO IS NOT NULL               THEN C.DATA_CONCLUSAO
+                WHEN D.DATA_FIM IS NOT NULL                     THEN D.DATA_FIM
+            ELSE NULL   END DATA_CONCLUSAO,
+        CASE    WHEN A.HORA_FIM IS NOT NULL                     THEN A.HORA_FIM
+                WHEN C.HORA_CONCLUSAO IS NOT NULL               THEN C.HORA_CONCLUSAO
+                WHEN D.HR_FIM IS NOT NULL                       THEN D.HR_FIM
+            ELSE NULL   END HORA_CONCLUSAO,            
+        CASE    WHEN B.DATA_PRAZO_CONCLUSAO IS NOT NULL         THEN B.DATA_PRAZO_CONCLUSAO
+                WHEN C.DATA_PRAZO_CONCLUSAO IS NOT NULL         THEN C.DATA_PRAZO_CONCLUSAO
+            ELSE NULL   END DATA_PRAZO_CONCLUSAO,  
+        C.HORA_PRAZO_CONCLUSAO,   
+        CASE    WHEN A.PROTOCOLO IS NOT NULL                    THEN TO_CHAR(A.PROTOCOLO)
+                WHEN B.PROTOCOLO IS NOT NULL                    THEN TO_CHAR(B.PROTOCOLO)
+                WHEN C.PROTOCOLO IS NOT NULL                    THEN TO_CHAR(C.PROTOCOLO)
+                WHEN D.PROTOCOLO IS NOT NULL                    THEN TO_CHAR(D.PROTOCOLO)
+            ELSE NULL   END PROTOCOLO,
+        A.CONTRATO, 
+        CASE    WHEN A.CPF IS NOT NULL                          THEN TO_CHAR(A.CPF)
+                WHEN B.CPF_CNPJ IS NOT NULL                     THEN TO_CHAR(B.CPF_CNPJ)
+                WHEN C.CPF_CNPJ IS NOT NULL                     THEN TO_CHAR(C.CPF_CNPJ)
+                WHEN D.CPF IS NOT NULL                          THEN TO_CHAR(D.CPF)
+            ELSE NULL   END CPF_CNPJ,
+        C.PROTOCOLO_INTERNO,   
+        B.NOME                                                                          AS NOME_CLIENTE,
+        A.BU_CEDENTE, 
+        A.AGENTE_RESPONSAVEL, 
+        CASE    WHEN A.AGENTE_CODIGO IS NOT NULL                THEN A.AGENTE_CODIGO
+                WHEN B.UNIDADE_OCORRENCIA IS NOT NULL           THEN B.UNIDADE_OCORRENCIA
+            ELSE NULL   END AGENTE_CODIGO,
+        A.NAO_CLIENTE, 
+        B.MANIFESTANTE, 
+        CASE    WHEN A.CENTRAL IS NOT NULL                      THEN A.CENTRAL
+                WHEN B.CANAL IS NOT NULL                        THEN B.CANAL
+                WHEN C.CENTRAL IS NOT NULL                      THEN C.CENTRAL 
+            ELSE NULL   END CENTRAL_CANAL,
+        B.CLASSIFICACAO, 
+        A.PROPRIETARIO_PROTOCOLO, 
+        CASE    WHEN A.CRIADO_POR IS NOT NULL                   THEN A.CRIADO_POR
+                WHEN B.ANALISTA IS NOT NULL                     THEN B.ANALISTA
+                WHEN C.CRIADO_POR IS NOT NULL                   THEN C.CRIADO_POR
+                WHEN D.OPERADOR IS NOT NULL                     THEN D.OPERADOR
+            ELSE NULL   END CRIADO_POR,            
+        CASE    WHEN A.FECHADO_POR IS NOT NULL                  THEN A.FECHADO_POR
+                WHEN C.FINALIZADO_POR IS NOT NULL               THEN C.FINALIZADO_POR
+            ELSE NULL   END FECHADO_POR,            
+        CASE    WHEN A.TIPO IS NOT NULL                         THEN A.TIPO
+                WHEN C.TIPO IS NOT NULL                         THEN C.TIPO
+                WHEN D.TIPO IS NOT NULL                         THEN D.TIPO
+            ELSE NULL   END TIPO,
+        CASE    WHEN A.MOTIVO IS NOT NULL                       THEN A.MOTIVO
+                WHEN B.MOTIVO IS NOT NULL                       THEN B.MOTIVO
+                WHEN C.MOTIVO IS NOT NULL                       THEN C.MOTIVO
+                WHEN D.MOTIVO IS NOT NULL                       THEN D.MOTIVO
+            ELSE NULL   END MOTIVO,
+        CASE    WHEN A.SUBMOTIVO IS NOT NULL                    THEN A.SUBMOTIVO
+                WHEN C.SUBMOTIVO IS NOT NULL                    THEN C.SUBMOTIVO
+            ELSE '-'   END SUBMOTIVO,            
+        CASE    WHEN A.PRODUTO IS NOT NULL                      THEN A.PRODUTO
+                WHEN B.PRODUTO IS NOT NULL                      THEN B.PRODUTO
+                WHEN C.PRODUTO IS NOT NULL                      THEN C.PRODUTO
+                WHEN D.PRODUTO IS NOT NULL                      THEN D.PRODUTO
+            ELSE '-'   END PRODUTO,
+        CASE    WHEN A.PRODUTO_CONTRATO IS NOT NULL             THEN A.PRODUTO_CONTRATO
+                WHEN C.PRODUTO_CONTRATO IS NOT NULL             THEN C.PRODUTO_CONTRATO
+            ELSE '-'   END PRODUTO_CONTRATO,
+        CASE    WHEN A.ORIGEM_ATENDIMENTO IS NOT NULL           THEN A.ORIGEM_ATENDIMENTO
+                WHEN B.FORMA_ENTRADA IS NOT NULL                THEN B.FORMA_ENTRADA
+            ELSE '-'   END ORIGEM_ATENDIMENTO,
+        CASE    WHEN A.STATUS IS NOT NULL                       THEN A.STATUS
+                WHEN D.STATUS IS NOT NULL                       THEN D.STATUS
+            ELSE '-'   END STATUS,
+        CASE    WHEN A.CANAL IS NOT NULL                        THEN A.CANAL
+                WHEN C.CANAL IS NOT NULL                        THEN C.CANAL
+            ELSE '-'   END CANAL,
+        B.DESCRICAO, 
+        B.RESULTADO, 
+        B.FINALIZACAO,        
+        CASE    WHEN A.SISTEMA IS NOT NULL                      THEN A.SISTEMA
+                WHEN B.SISTEMA IS NOT NULL                      THEN B.SISTEMA
+                WHEN C.SISTEMA IS NOT NULL                      THEN C.SISTEMA
+                WHEN D.SISTEMA IS NOT NULL                      THEN D.SISTEMA
+            ELSE NULL   END SISTEMA  
+
+    FROM VIEW_SALESFORCE_GERAL A
+
+FULL JOIN VIEW_OMD_GERAL B
+    ON A.PROTOCOLO = B.PROTOCOLO
+    
+FULL JOIN VIEW_PLUSOFT_GERAL C
+    ON A.PROTOCOLO = C.PROTOCOLO
+    
+FULL JOIN VIEW_PIPEFY_UZE D
+    ON A.PROTOCOLO = D.PROTOCOLO AND A.SISTEMA = D.SISTEMA
+      
+)
+
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--BASE INCLUINDO CHAT E 2N
+CREATE VIEW VIEW_BASE_GERAL_CHAT_2N AS (
+    SELECT 
+        A.DATA_INICIO, 
+        CASE    WHEN A.DATA_INICIO IS NOT NULL  THEN CONCAT(SUBSTR(A.DATA_INICIO,4,2), SUBSTR(A.DATA_INICIO,7,4)) 
+            ELSE NULL   END MES_ANO,
+        A.HORA_INICIO, 
+        A.DATA_CONCLUSAO, 
+        A.HORA_CONCLUSAO, 
+        A.DATA_PRAZO_CONCLUSAO, 
+        A.HORA_PRAZO_CONCLUSAO, 
+        A.PROTOCOLO, 
+        A.CONTRATO, 
+        A.CPF_CNPJ, 
+        A.PROTOCOLO_INTERNO, 
+        A.NOME_CLIENTE, 
+        A.BU_CEDENTE, 
+        A.AGENTE_RESPONSAVEL, 
+        A.AGENTE_CODIGO, 
+        A.NAO_CLIENTE, 
+        A.MANIFESTANTE, 
+        A.CENTRAL_CANAL, 
+        A.CLASSIFICACAO, 
+        A.PROPRIETARIO_PROTOCOLO, 
+        A.CRIADO_POR, 
+        A.FECHADO_POR, 
+        A.TIPO, 
+        A.MOTIVO, 
+        A.SUBMOTIVO, 
+        CASE    WHEN A.PRODUTO = '-' THEN UPPER(C.PRODUTO)
+            ELSE A.PRODUTO END PRODUTO,
+        A.PRODUTO_CONTRATO, 
+        A.ORIGEM_ATENDIMENTO, 
+        A.STATUS, 
+        CASE    WHEN D.PROTOCOLO IS NOT NULL    THEN '2º Nivel - VOZ'
+                WHEN E.PROTOCOLO IS NOT NULL    THEN '2º Nivel - EMAIL'
+            ELSE A.CANAL END CANAL,
+        A.DESCRICAO,
+        CASE    WHEN D.COMENTARIO IS NOT NULL   THEN D.COMENTARIO
+                WHEN E.COMENTARIO IS NOT NULL   THEN E.COMENTARIO
+            ELSE NULL END COMENTARIO,
+        A.RESULTADO, 
+        A.FINALIZACAO, 
+        B.SERVICO                       AS SKILL,
+        CAST(B.TME AS INT)              AS TME,
+        CAST(B.TMCHAT AS INT)           AS TMO, 
+        CAST(B.ABANDONO AS INT)         AS T_ABANDONO,
+
+        CASE    WHEN C.NPS IS NOT NULL          THEN C.NPS
+                WHEN E.NOTA_NPS IS NOT NULL     THEN E.NOTA_NPS
+            ELSE NULL END NPS,
+
+        CASE    WHEN C.CSAT IS NOT NULL         THEN C.CSAT
+                WHEN G.NOTA_CSAT IS NOT NULL    THEN G.NOTA_CSAT
+            ELSE NULL END CSAT,
+
+        CASE    WHEN C.PESQ_ATEND IS NOT NULL   THEN C.PESQ_ATEND
+                WHEN F.NOTA_CES IS NOT NULL     THEN F.NOTA_CES
+            ELSE NULL END CES,
+        A.SISTEMA
+
+    FROM VIEW_BASE_SISTEMA_GERAL A
+
+LEFT JOIN TB_VISAO_CHAT B
+    ON A.PROTOCOLO = B.PROTOCOLO AND A.SISTEMA = 'SALESFORCE'
+    
+LEFT JOIN TB_PESQ_CHAT_2022 C
+    ON B.PROTOCOLO = C.PROTOCOLO
+
+LEFT JOIN TB_NPS_2N D
+    ON A.PROTOCOLO = D.PROTOCOLO
+
+LEFT JOIN TB_NPS_EMAIL E
+    ON A.PROTOCOLO = E.PROTOCOLO
+
+LEFT JOIN TB_CES_2N F
+    ON A.PROTOCOLO = F.PROTOCOLO
+
+LEFT JOIN TB_CSAT_2N G
+    ON A.PROTOCOLO = G.PROTOCOLO
+
+)
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--CANAL DIRETO
+CREATE VIEW VW_CANAL_DIRETO AS (
+SELECT 
+     CON.CONTRATO,
+     GPC.DESCRICAO,
+     AG.CODIGO,
+     AG.FANTASIA,
+     AG.APELIDO,
+     CLI.CPF_CGC
+FROM AGENTES@DW AG, GRUPO_CANAL_VENDA@DW GPC, CONTRATOS@DW CON, CLIENTES@DW CLI
+      WHERE AG.GRUPO_CANAL_VENDA = 2 AND CON.CLIENTE = CLI.CODIGO AND 
+      GPC.CODIGO = AG.GRUPO_CANAL_VENDA AND CON.AGENTE = AG.CODIGO)
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+CREATE VIEW VIEW_BASES_FINAL AS (
+SELECT DISTINCT 
+
+A.*,
+CASE    WHEN    B.BU IS NOT NULL                THEN B.BU
+        WHEN    D.BU IS NOT NULL                THEN D.BU
+    ELSE NULL END BU,
+
+CASE    WHEN    B."BU SERVIÇO" IS NOT NULL      THEN B."BU SERVIÇO"
+        WHEN    D."BU SERVIÇO" IS NOT NULL      THEN D."BU SERVIÇO"
+    ELSE NULL END BU_SERVICO,
+
+E.DESCRICAO AS CANAL_DIRETO,
+C.FCR,
+F.NOME_AGENTE,
+F.GRUPO,
+F.TIPO  AS CORRESPONDENTE
+
+
+FROM VIEW_BASE_GERAL_CHAT_2N A
+
+LEFT JOIN APOIO_CEDENTE B
+    ON A.BU_CEDENTE = B.CEDENTE
+
+LEFT JOIN VW_CANAL_DIRETO E
+    ON A.CONTRATO = E.CONTRATO
+    
+LEFT JOIN APOIO_PRODUTO D
+    ON  UPPER(A.PRODUTO) =          UPPER(D.PRODUTO)
+    AND UPPER(A.PRODUTO_CONTRATO) = UPPER(D.PRODUTO_CONTRATO)
+    
+LEFT JOIN APOIO_ARVORE_TABULACAO C
+    ON  UPPER(A.PRODUTO) =   UPPER(C.PRODUTO)
+    AND UPPER(A.TIPO) =      UPPER(C.TIPO)
+    AND UPPER(A.MOTIVO) =    UPPER(C.MOTIVO)
+    AND UPPER(A.SUBMOTIVO) = UPPER(C.SUBMOTIVO)
+
+LEFT JOIN APOIO_AGENTE F
+    ON  A.AGENTE_CODIGO = F.COD_AGENTE  )
