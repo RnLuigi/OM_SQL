@@ -85,8 +85,15 @@ CREATE VIEW VIEW_SALESFORCE_GERAL AS (
         UPPER(TIPO)                                                                     AS TIPO, 
         UPPER(MOTIVO)                                                                   AS MOTIVO, 
         UPPER("SUB-MOTIVO")                                                             AS SUBMOTIVO, 
-        UPPER(PRODUTO)                                                                  AS PRODUTO, 
-        UPPER("PRODUTO DO CONTRATO")                                                    AS PRODUTO_CONTRATO, 
+        
+        CASE    WHEN PRODUTO IS NULL                            THEN '-'
+                WHEN PRODUTO IS NOT NULL                        THEN UPPER(PRODUTO)
+            ELSE '-'    END PRODUTO,
+    
+        CASE    WHEN "PRODUTO DO CONTRATO" IS NULL              THEN '-'
+                WHEN "PRODUTO DO CONTRATO" IS NOT NULL          THEN UPPER("PRODUTO DO CONTRATO")
+            ELSE '-'    END PRODUTO_CONTRATO,
+        
         UPPER("ORIGEM DO PROTOCOLO")                                                    AS ORIGEM_ATENDIMENTO, 
         STATUS, 
 --"CRIADO POR_", 
@@ -95,7 +102,7 @@ CREATE VIEW VIEW_SALESFORCE_GERAL AS (
         CANAL,
         CASE    WHEN "NUMERO DO PROTOCOLO" IS NOT NULL      THEN 'SALESFORCE'       ELSE NULL       END SISTEMA
 
-    FROM TB_SALESFORCE_TODAS_CENTRAIS)
+    FROM TB_SALESFORCE_TODAS_CENTRAIS    )
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -156,6 +163,9 @@ FROM TB_OMD_GERAL )
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --TRIGG
 
+DELETE FROM TB_PLUSOFT_TRIGG
+WHERE DATA_REGISTRO_OCORRENCIA LIKE '%11/2022%'
+
 INSERT INTO TB_PLUSOFT_TRIGG (
 
 "Número do atendimento", 
@@ -182,10 +192,7 @@ SELECT * FROM TB_PLUSOFT_TRIGG_
 
 DROP TABLE TB_PLUSOFT_TRIGG_
 
-
 ---------------------------------------------------------------------------------------------------------
-
-
 
 CREATE VIEW VIEW_PLUSOFT_GERAL AS (
     SELECT 
@@ -263,7 +270,7 @@ CREATE VIEW VIEW_PIPEFY_UZE AS (
 --BASE GERAL DOS SISTEMAS
 
 CREATE VIEW VIEW_BASE_SISTEMA_GERAL AS (
-    SELECT 
+    SELECT DISTINCT 
         CASE    WHEN A.DATA_INICIO IS NOT NULL                  THEN A.DATA_INICIO
                 WHEN B.DATA_INICIO IS NOT NULL                  THEN B.DATA_INICIO
                 WHEN C.DATA_INICIO IS NOT NULL                  THEN C.DATA_INICIO
@@ -287,11 +294,15 @@ CREATE VIEW VIEW_BASE_SISTEMA_GERAL AS (
             ELSE NULL   END DATA_PRAZO_CONCLUSAO,  
         C.HORA_PRAZO_CONCLUSAO,   
         CASE    WHEN A.PROTOCOLO IS NOT NULL                    THEN TO_CHAR(A.PROTOCOLO)
-                WHEN B.PROTOCOLO IS NOT NULL                    THEN TO_CHAR(B.PROTOCOLO)
+                WHEN B.PROTOCOLO IS NOT NULL                    THEN TRIM (TO_CHAR(B.PROTOCOLO,'999999999999'))
                 WHEN C.PROTOCOLO IS NOT NULL                    THEN TO_CHAR(C.PROTOCOLO)
                 WHEN D.PROTOCOLO IS NOT NULL                    THEN TO_CHAR(D.PROTOCOLO)
             ELSE NULL   END PROTOCOLO,
-        A.CONTRATO, 
+
+        CASE    WHEN A.CONTRATO IS NOT NULL                         THEN A.CONTRATO
+                WHEN B.PROTOCOLO IS NOT NULL                        THEN CLI.CONTRATO
+            ELSE NULL   END CONTRATO  ,  
+
         CASE    WHEN A.CPF IS NOT NULL                          THEN TO_CHAR(A.CPF)
                 WHEN B.CPF_CNPJ IS NOT NULL                     THEN TO_CHAR(B.CPF_CNPJ)
                 WHEN C.CPF_CNPJ IS NOT NULL                     THEN TO_CHAR(C.CPF_CNPJ)
@@ -308,7 +319,7 @@ CREATE VIEW VIEW_BASE_SISTEMA_GERAL AS (
         B.MANIFESTANTE, 
         CASE    WHEN A.CENTRAL IS NOT NULL                      THEN A.CENTRAL
                 WHEN B.CANAL IS NOT NULL                        THEN B.CANAL
-                WHEN C.CENTRAL IS NOT NULL                      THEN C.CENTRAL 
+                WHEN C.PRODUTO IS NOT NULL                      THEN C.PRODUTO
             ELSE NULL   END CENTRAL_CANAL,
         B.CLASSIFICACAO, 
         A.PROPRIETARIO_PROTOCOLO, 
@@ -323,6 +334,7 @@ CREATE VIEW VIEW_BASE_SISTEMA_GERAL AS (
         CASE    WHEN A.TIPO IS NOT NULL                         THEN A.TIPO
                 WHEN C.TIPO IS NOT NULL                         THEN C.TIPO
                 WHEN D.TIPO IS NOT NULL                         THEN D.TIPO
+                WHEN B.PROTOCOLO IS NOT NULL                    THEN 'OUVIDORIA'
             ELSE NULL   END TIPO,
         CASE    WHEN A.MOTIVO IS NOT NULL                       THEN A.MOTIVO
                 WHEN B.MOTIVO IS NOT NULL                       THEN B.MOTIVO
@@ -334,8 +346,12 @@ CREATE VIEW VIEW_BASE_SISTEMA_GERAL AS (
             ELSE '-'   END SUBMOTIVO,            
         CASE    WHEN A.PRODUTO IS NOT NULL                      THEN A.PRODUTO
                 WHEN B.PRODUTO IS NOT NULL                      THEN B.PRODUTO
-                WHEN C.PRODUTO IS NOT NULL                      THEN C.PRODUTO
+                WHEN C.CENTRAL IS NOT NULL                      THEN C.CENTRAL 
                 WHEN D.PRODUTO IS NOT NULL                      THEN D.PRODUTO
+                WHEN A.PRODUTO IS NULL                          THEN '-'
+                WHEN B.PRODUTO IS NULL                          THEN '-'
+                WHEN C.CENTRAL IS NULL                          THEN '-'
+                WHEN D.PRODUTO IS NULL                          THEN '-'
             ELSE '-'   END PRODUTO,
         CASE    WHEN A.PRODUTO_CONTRATO IS NOT NULL             THEN A.PRODUTO_CONTRATO
                 WHEN C.PRODUTO_CONTRATO IS NOT NULL             THEN C.PRODUTO_CONTRATO
@@ -368,8 +384,21 @@ FULL JOIN VIEW_PLUSOFT_GERAL C
     
 FULL JOIN VIEW_PIPEFY_UZE D
     ON A.PROTOCOLO = D.PROTOCOLO AND A.SISTEMA = D.SISTEMA
-      
+
+LEFT JOIN (SELECT CLI_2.CPF_CGC, MAX(CTT.CONTRATO) CONTRATO
+FROM CLIENTES@DW CLI_2
+LEFT JOIN CONTRATOS@DW CTT
+ON CLI_2.CODIGO = CTT.CLIENTE
+GROUP BY CLI_2.CPF_CGC) CLI
+
+--CLIENTES@DW CLI
+    ON REPLACE(REPLACE(B.CPF_CNPJ, '-',''), '.','') = CLI.CPF_CGC
+
+--LEFT JOIN CONTRATOS@DW CTT
+--    ON CLI.CODIGO = CTT.CLIENTE 
+
 )
+
 
 
 
@@ -406,8 +435,11 @@ CREATE VIEW VIEW_BASE_GERAL_CHAT_2N AS (
         A.TIPO, 
         A.MOTIVO, 
         A.SUBMOTIVO, 
-        CASE    WHEN A.PRODUTO = '-' THEN UPPER(C.PRODUTO)
-            ELSE A.PRODUTO END PRODUTO,
+        CASE    WHEN A.PRODUTO = '-' AND  
+                    C.PRODUTO IS NOT NULL       THEN UPPER(C.PRODUTO)
+                WHEN A.PRODUTO IS NULL          THEN '-'
+                WHEN A.PRODUTO IS NOT NULL      THEN A.PRODUTO
+            ELSE '-' END PRODUTO,
         A.PRODUTO_CONTRATO, 
         A.ORIGEM_ATENDIMENTO, 
         A.STATUS, 
@@ -486,12 +518,20 @@ CREATE VIEW VIEW_BASES_FINAL AS (
 SELECT DISTINCT 
 
 A.*,
-CASE    WHEN    B.BU IS NOT NULL                THEN B.BU
-        WHEN    D.BU IS NOT NULL                THEN D.BU
+CASE    WHEN    B.BU IS NOT NULL                        THEN B.BU
+        WHEN    D.BU IS NOT NULL                        THEN D.BU
+        WHEN    A.SISTEMA = 'PLUSFOT'                   THEN 'TRIGG'
+        WHEN    B.BU = 'SEGUROS' OR D.BU = 'SEGUROS'    THEN 'SEGUROS'   
+        WHEN    B.BU = 'SEGUROS' OR D.BU = 'SEGUROS'    THEN 'DIVERSOS' 
+        WHEN    B.BU = 'SEGUROS' OR D.BU = 'SEGUROS'    THEN 'EMPRESTTO'
     ELSE NULL END BU,
 
-CASE    WHEN    B."BU SERVIÇO" IS NOT NULL      THEN B."BU SERVIÇO"
-        WHEN    D."BU SERVIÇO" IS NOT NULL      THEN D."BU SERVIÇO"
+CASE    WHEN    B."BU SERVIÇO" IS NOT NULL              THEN B."BU SERVIÇO"
+        WHEN    D."BU SERVIÇO" IS NOT NULL              THEN D."BU SERVIÇO"
+        WHEN    A.SISTEMA = 'PLUSFOT'                   THEN 'TRIGG'
+        WHEN    B.BU = 'SEGUROS' OR D.BU = 'SEGUROS'    THEN 'SEGUROS'
+        WHEN    B.BU = 'SEGUROS' OR D.BU = 'SEGUROS'    THEN 'DIVERSOS'
+        WHEN    B.BU = 'SEGUROS' OR D.BU = 'SEGUROS'    THEN 'EMPRESTTO'
     ELSE NULL END BU_SERVICO,
 
 E.DESCRICAO AS CANAL_DIRETO,
@@ -521,3 +561,13 @@ LEFT JOIN APOIO_ARVORE_TABULACAO C
 
 LEFT JOIN APOIO_AGENTE F
     ON  A.AGENTE_CODIGO = F.COD_AGENTE  )
+
+
+
+
+
+
+    DROP TABLE TABLE_BASES_FINAL;
+
+CREATE TABLE TABLE_BASES_FINAL as (
+SELECT * FROM VIEW_BASES_FINAL)
