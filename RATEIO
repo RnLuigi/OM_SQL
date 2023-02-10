@@ -1,0 +1,578 @@
+DROP TABLE TABLE_SISTEMAS;
+
+CREATE TABLE TABLE_SISTEMAS AS (
+SELECT 
+
+GERAL.*, 
+--BU.DESCRICAO AS BU
+
+CASE    
+        WHEN BU_C.BU IS NOT NULL        THEN BU_C.BU
+        WHEN BU_P.BU IS NOT NULL        THEN BU_P.BU
+  ELSE NULL END BU, 
+
+CASE    
+        WHEN BU_C."BU SERVIÇO" IS NOT NULL THEN BU_C."BU SERVIÇO"
+        WHEN BU_P."BU SERVIÇO" IS NOT NULL THEN BU_P."BU SERVIÇO"
+  ELSE NULL END BU_SERVICO,
+  
+BU.DESCRICAO AS BU_CTT,
+
+CASE    WHEN SUBSTR(BU.CONTRATO,1,6) = '101919' OR SUBSTR(BU.CONTRATO,1,6) = '102332'   THEN 'NPL - PECUNIA'
+        WHEN SUBSTR(BU.CONTRATO,1,6) = '102675' OR SUBSTR(BU.CONTRATO,1,6) = '102010'   THEN 'NPL - BV'
+        WHEN SUBSTR(BU.CONTRATO,1,6) = '102397'                                         THEN 'NPL - BMG'
+        WHEN SUBSTR(BU.CONTRATO,1,6) = '102549'                                         THEN 'NPL - NEXTEL'
+        WHEN SUBSTR(BU.CONTRATO,1,6) = '102155' OR SUBSTR(BU.CONTRATO,1,6) = '102278' OR  
+             SUBSTR(BU.CONTRATO,1,6) = '102325'                                         THEN 'NPL - CEF'
+        WHEN SUBSTR(BU.CONTRATO,1,6) = '102363'                                         THEN 'NPL - SANTANDER'
+        WHEN SUBSTR(BU.CONTRATO,1,6) = '102391'                                         THEN 'NPL - RCI'
+        WHEN SUBSTR(BU.CONTRATO,1,6) = '102155' OR SUBSTR(BU.CONTRATO,1,6) = '102278' OR  
+             SUBSTR(BU.CONTRATO,1,6) = '102325'  THEN 'NPL - CEF'
+        WHEN SUBSTR(BU.CONTRATO,1,6) = '102625' OR SUBSTR(BU.CONTRATO,1,6) = '102640' OR  
+             SUBSTR(BU.CONTRATO,1,6) = '102650' OR SUBSTR(BU.CONTRATO,1,6) = '102670' OR
+             SUBSTR(BU.CONTRATO,1,6) = '102715' OR SUBSTR(BU.CONTRATO,1,6) = '102755'   THEN 'NPL - CETELEM'
+        WHEN SUBSTR(BU.CONTRATO,1,6) = '102915'                                         THEN 'NPL - CARREFOUR'    
+        WHEN SUBSTR(BU.CONTRATO,1,6) = '102493'                                         THEN 'NPL - CACIQUE'  
+        
+        WHEN SUBSTR(BU.CONTRATO,1,6) = '301316' OR SUBSTR(BU.CONTRATO,1,6) = '301336' OR
+             SUBSTR(BU.CONTRATO,1,6) = '301908' OR SUBSTR(BU.CONTRATO,1,6) = '102875'   THEN 'TRIGG'  
+         
+        WHEN SUBSTR(BU.CONTRATO,1,6) = '302651' OR SUBSTR(BU.CONTRATO,1,6) = '302677'   THEN 'BEBLUE'
+        
+        WHEN SUBSTR(BU.CONTRATO,1,6) = '300662' OR SUBSTR(BU.CONTRATO,1,6) = '301301' OR
+             SUBSTR(BU.CONTRATO,1,6) = '301337' OR SUBSTR(BU.CONTRATO,1,6) = '301368' OR
+             SUBSTR(BU.CONTRATO,1,6) = '301374' OR SUBSTR(BU.CONTRATO,1,6) = '301410' OR
+             SUBSTR(BU.CONTRATO,1,6) = '301502' OR SUBSTR(BU.CONTRATO,1,6) = '301621' OR
+             SUBSTR(BU.CONTRATO,1,6) = '301638'         THEN 'UZE CONSTRUCAO' 
+
+        WHEN SUBSTR(BU.CONTRATO,1,6) = '301369' OR SUBSTR(BU.CONTRATO,1,6) = '302276' OR
+             SUBSTR(BU.CONTRATO,1,6) = '302386'         THEN 'UZE NORTE' 
+
+        WHEN SUBSTR(BU.CONTRATO,1,6) = '302646'       THEN 'CARTAO NEG DIGITAIS' 
+
+
+
+        
+
+        
+        
+    ELSE SUBSTR(BU.CONTRATO,1,6) END BU_CONTRATO_P,
+    
+    BU.CONTRATO AS BU_CONTRATO
+
+FROM (
+
+
+SELECT
+
+BS_SISTEMAS.DATA_INICIO,
+CASE    WHEN BS_SISTEMAS.DATA_INICIO IS NOT NULL  THEN CONCAT(SUBSTR(BS_SISTEMAS.DATA_INICIO,4,2), SUBSTR(BS_SISTEMAS.DATA_INICIO,7,4))
+            ELSE NULL   END MES_ANO,
+BS_SISTEMAS.HORA_INICIO,
+BS_SISTEMAS.DATA_CONCLUSAO,
+BS_SISTEMAS.HORA_CONCLUSAO,
+BS_SISTEMAS.DATA_PRAZO_CONCLUSAO,
+BS_SISTEMAS.HORA_PRAZO_CONCLUSAO,
+BS_SISTEMAS.PROTOCOLO,
+BS_SISTEMAS.CONTRATO,
+BS_SISTEMAS.CPF_CNPJ,
+BS_SISTEMAS.PROTOCOLO_INTERNO,
+BS_SISTEMAS.NOME_CLIENTE,
+BS_SISTEMAS.BU_CEDENTE,
+BS_SISTEMAS.AGENTE_RESPONSAVEL,
+BS_SISTEMAS.AGENTE_CODIGO,
+BS_SISTEMAS.NAO_CLIENTE,
+BS_SISTEMAS.MANIFESTANTE,
+BS_SISTEMAS.CENTRAL_CANAL,
+BS_SISTEMAS.CLASSIFICACAO,
+BS_SISTEMAS.PROPRIETARIO_PROTOCOLO,
+BS_SISTEMAS.CRIADO_POR,
+BS_SISTEMAS.FECHADO_POR,
+BS_SISTEMAS.TIPO,
+BS_SISTEMAS.MOTIVO,
+BS_SISTEMAS.SUBMOTIVO,
+CASE    --WHEN BS_SISTEMAS.PRODUTO = '-' AND C.PRODUTO IS NOT NULL       THEN UPPER(C.PRODUTO)
+        WHEN BS_SISTEMAS.PRODUTO IS NULL          THEN '-'
+        WHEN BS_SISTEMAS.PRODUTO IS NOT NULL      THEN BS_SISTEMAS.PRODUTO
+    ELSE '-' END PRODUTO,
+BS_SISTEMAS.PRODUTO_CONTRATO,
+BS_SISTEMAS.ORIGEM_ATENDIMENTO,
+BS_SISTEMAS.STATUS,
+CASE    WHEN PESQ_NPS_2N.PROTOCOLO IS NOT NULL                                  THEN '2º Nivel - VOZ'
+        WHEN PESQ_NPS_EMAIL.PROTOCOLO IS NOT NULL                               THEN '2º Nivel - EMAIL'
+    ELSE BS_SISTEMAS.CANAL END CANAL,
+BS_SISTEMAS.DESCRICAO,
+CASE    WHEN PESQ_NPS_2N.COMENTARIO IS NOT NULL                                 THEN PESQ_NPS_2N.COMENTARIO
+        WHEN PESQ_NPS_EMAIL.COMENTARIO IS NOT NULL                              THEN PESQ_NPS_EMAIL.COMENTARIO
+    ELSE NULL END COMENTARIO,
+BS_SISTEMAS.RESULTADO,
+BS_SISTEMAS.FINALIZACAO,
+CHAT.SERVICO                              AS SKILL,
+CAST(CHAT.TME AS INT)                     AS TME,
+CAST(CHAT.TMCHAT AS INT)                  AS TMO,
+CAST(CHAT.ABANDONO AS INT)                AS T_ABANDONO,
+
+CASE    WHEN PESQ_CHAT.NPS IS NOT NULL                                          THEN PESQ_CHAT.NPS
+        WHEN PESQ_NPS_EMAIL.NOTA_NPS IS NOT NULL                                THEN PESQ_NPS_EMAIL.NOTA_NPS
+    ELSE NULL END NPS,
+
+CASE    WHEN PESQ_CHAT.CSAT IS NOT NULL                                         THEN PESQ_CHAT.CSAT
+        WHEN PESQ_CSAT_2N.NOTA_CSAT IS NOT NULL                                 THEN PESQ_CSAT_2N.NOTA_CSAT
+    ELSE NULL END CSAT,
+
+CASE    WHEN PESQ_CHAT.PESQ_ATEND IS NOT NULL                                   THEN PESQ_CHAT.PESQ_ATEND
+        WHEN PESQ_CES_2N.NOTA_CES IS NOT NULL                                   THEN PESQ_CES_2N.NOTA_CES
+    ELSE NULL END CES,
+
+BS_SISTEMAS.SISTEMA,
+CASE    WHEN CHAT.PROTOCOLO IS NOT NULL                                         THEN 'CHAT'
+    ELSE NULL END TIPO_ATEND
+
+
+FROM
+
+    (
+    SELECT
+
+    --DATA_INICIO
+            CASE    WHEN  SALESFORCE.DATA_INICIO IS NOT NULL                    THEN SALESFORCE.DATA_INICIO
+                    WHEN  OMD.DATA_INICIO IS NOT NULL                           THEN OMD.DATA_INICIO
+                    WHEN  PLUSOFT.DATA_INICIO IS NOT NULL                       THEN PLUSOFT.DATA_INICIO
+                    WHEN  PIPEFY.DATA_INI IS NOT NULL                           THEN PIPEFY.DATA_INI
+                ELSE NULL END DATA_INICIO,
+    --HORA_INICIO
+            CASE    WHEN SALESFORCE.HORA_INICIO IS NOT NULL                     THEN SALESFORCE.HORA_INICIO
+                    WHEN PLUSOFT.HORA_INICIO IS NOT NULL                        THEN PLUSOFT.HORA_INICIO
+                    WHEN PIPEFY.HR_INI IS NOT NULL                              THEN PIPEFY.HR_INI
+                ELSE NULL   END HORA_INICIO,
+    --DATA_CONCLUSAO
+            CASE    WHEN SALESFORCE.DATA_FIM IS NOT NULL                        THEN SALESFORCE.DATA_FIM
+                    WHEN OMD.DATA_CONCLUSAO IS NOT NULL                         THEN OMD.DATA_CONCLUSAO
+                    WHEN PLUSOFT.DATA_CONCLUSAO IS NOT NULL                     THEN PLUSOFT.DATA_CONCLUSAO
+                    WHEN PIPEFY.DATA_FIM IS NOT NULL                            THEN PIPEFY.DATA_FIM
+                ELSE NULL   END DATA_CONCLUSAO,
+    --HORA_CONCLUSAO
+            CASE    WHEN SALESFORCE.HORA_FIM IS NOT NULL                        THEN SALESFORCE.HORA_FIM
+                    WHEN PLUSOFT.HORA_CONCLUSAO IS NOT NULL                     THEN PLUSOFT.HORA_CONCLUSAO
+                    WHEN PIPEFY.HR_FIM IS NOT NULL                              THEN PIPEFY.HR_FIM
+                ELSE NULL   END HORA_CONCLUSAO,
+    --DATA_PRAZO_CONCLUSAO
+            CASE    WHEN OMD.DATA_PRAZO_CONCLUSAO IS NOT NULL                   THEN OMD.DATA_PRAZO_CONCLUSAO
+                    WHEN PLUSOFT.DATA_PRAZO_CONCLUSAO IS NOT NULL               THEN PLUSOFT.DATA_PRAZO_CONCLUSAO
+                ELSE NULL   END DATA_PRAZO_CONCLUSAO,
+    --HORA_PRAZO_CONCLUSAO
+            PLUSOFT.HORA_PRAZO_CONCLUSAO,
+    --PROTOCOLO
+            CASE    WHEN SALESFORCE.PROTOCOLO IS NOT NULL                       THEN TO_CHAR(SALESFORCE.PROTOCOLO)
+                    WHEN OMD.PROTOCOLO IS NOT NULL                              THEN TRIM (TO_CHAR(OMD.PROTOCOLO,'999999999999'))
+                    WHEN PLUSOFT.PROTOCOLO IS NOT NULL                          THEN TO_CHAR(PLUSOFT.PROTOCOLO)
+                    WHEN PIPEFY.PROTOCOLO IS NOT NULL                           THEN TO_CHAR(PIPEFY.PROTOCOLO)
+                ELSE NULL   END PROTOCOLO,
+    --CONTRATO
+            CASE    WHEN SALESFORCE.CONTRATO IS NOT NULL                        THEN SALESFORCE.CONTRATO
+                    WHEN OMD.PROTOCOLO IS NOT NULL                              THEN OMD.CONTRATO
+                ELSE NULL   END CONTRATO  ,
+    --CPF_CNPJ
+            CASE    WHEN SALESFORCE.CPF IS NOT NULL                             THEN TO_CHAR(SALESFORCE.CPF)
+                    WHEN OMD.CPF_CNPJ IS NOT NULL                               THEN TO_CHAR(OMD.CPF_CNPJ)
+                    WHEN PLUSOFT.CPF_CNPJ IS NOT NULL                           THEN TO_CHAR(PLUSOFT.CPF_CNPJ)
+                    WHEN PIPEFY.CPF IS NOT NULL                                 THEN TO_CHAR(PIPEFY.CPF)
+                ELSE NULL   END CPF_CNPJ,
+    --PROTOCOLO_INTERNO
+            PLUSOFT.PROTOCOLO_INTERNO,
+    --NOME
+            OMD.NOME                                                              AS NOME_CLIENTE,
+    --BU_CEDENTE
+            SALESFORCE.BU_CEDENTE,
+    --AGENTE_RESPONSAVEL
+            SALESFORCE.AGENTE_RESPONSAVEL,
+    --AGENTE_CODIGO
+            CASE    WHEN SALESFORCE.AGENTE_CODIGO IS NOT NULL                   THEN SALESFORCE.AGENTE_CODIGO
+                    WHEN OMD.UNIDADE_OCORRENCIA IS NOT NULL                     THEN OMD.UNIDADE_OCORRENCIA
+                ELSE NULL   END AGENTE_CODIGO,
+    --NAO_CLIENTE
+            SALESFORCE.NAO_CLIENTE,
+    --MANIFESTANTE
+            OMD.MANIFESTANTE,
+    --CENTRAL_CANAL
+            CASE    WHEN SALESFORCE.CENTRAL IS NOT NULL                         THEN SALESFORCE.CENTRAL
+                    WHEN OMD.CANAL IS NOT NULL                                  THEN OMD.CANAL
+                    WHEN PLUSOFT.PRODUTO IS NOT NULL                            THEN PLUSOFT.PRODUTO
+                ELSE NULL   END CENTRAL_CANAL,
+    --CLASSIFICACAO
+            OMD.CLASSIFICACAO,
+    --PROPRIETARIO_PROTOCOLO
+            SALESFORCE.PROPRIETARIO_PROTOCOLO,
+    --CRIADO_POR
+            CASE    WHEN SALESFORCE.CRIADO_POR IS NOT NULL                      THEN SALESFORCE.CRIADO_POR
+                    WHEN OMD.ANALISTA IS NOT NULL                               THEN OMD.ANALISTA
+                    WHEN PLUSOFT.CRIADO_POR IS NOT NULL                         THEN PLUSOFT.CRIADO_POR
+                    WHEN PIPEFY.OPERADOR IS NOT NULL                            THEN PIPEFY.OPERADOR
+                ELSE NULL   END CRIADO_POR,
+    --FECHADO_POR
+            CASE    WHEN SALESFORCE.FECHADO_POR IS NOT NULL                     THEN SALESFORCE.FECHADO_POR
+                    WHEN PLUSOFT.FINALIZADO_POR IS NOT NULL                     THEN PLUSOFT.FINALIZADO_POR
+                ELSE NULL   END FECHADO_POR,
+    --TIPO
+            CASE    WHEN SALESFORCE.TIPO IS NOT NULL                            THEN SALESFORCE.TIPO
+                    WHEN PLUSOFT.TIPO IS NOT NULL                               THEN PLUSOFT.TIPO
+                    WHEN PIPEFY.TIPO IS NOT NULL                                THEN PIPEFY.TIPO
+                    WHEN OMD.PROTOCOLO IS NOT NULL                              THEN 'OUVIDORIA'
+                ELSE NULL   END TIPO,
+    --MOTIVO
+            CASE    WHEN SALESFORCE.MOTIVO IS NOT NULL                          THEN SALESFORCE.MOTIVO
+                    WHEN OMD.MOTIVO IS NOT NULL                                 THEN OMD.MOTIVO
+                    WHEN PLUSOFT.MOTIVO IS NOT NULL                             THEN PLUSOFT.MOTIVO
+                    WHEN PIPEFY.MOTIVO IS NOT NULL                              THEN PIPEFY.MOTIVO
+                ELSE NULL   END MOTIVO,
+    --SUBMOTIVO
+            CASE    WHEN SALESFORCE.SUBMOTIVO IS NOT NULL                       THEN SALESFORCE.SUBMOTIVO
+                    WHEN PLUSOFT.SUBMOTIVO IS NOT NULL                          THEN PLUSOFT.SUBMOTIVO
+                ELSE '-'   END SUBMOTIVO,
+    --PRODUTO
+            CASE    WHEN SALESFORCE.PRODUTO IS NOT NULL                         THEN SALESFORCE.PRODUTO
+                    WHEN OMD.PRODUTO IS NOT NULL                                THEN OMD.PRODUTO
+                    WHEN PLUSOFT.CENTRAL IS NOT NULL                            THEN PLUSOFT.CENTRAL
+                    WHEN PIPEFY.PRODUTO IS NOT NULL                             THEN PIPEFY.PRODUTO
+                    WHEN SALESFORCE.PRODUTO IS NULL                             THEN '-'
+                    WHEN OMD.PRODUTO IS NULL                                    THEN '-'
+                    WHEN PLUSOFT.CENTRAL IS NULL                                THEN '-'
+                    WHEN PIPEFY.PRODUTO IS NULL                                 THEN '-'
+                ELSE '-'   END PRODUTO,
+    --PRODUTO_CONTRATO
+            CASE    WHEN SALESFORCE.PRODUTO_CONTRATO IS NOT NULL                THEN SALESFORCE.PRODUTO_CONTRATO
+                    WHEN PLUSOFT.PRODUTO_CONTRATO IS NOT NULL                   THEN PLUSOFT.PRODUTO_CONTRATO
+                ELSE '-'   END PRODUTO_CONTRATO,
+    --ORIGEM_ATENDIMENTO
+            CASE    WHEN SALESFORCE.ORIGEM_ATENDIMENTO IS NOT NULL              THEN SALESFORCE.ORIGEM_ATENDIMENTO
+                    WHEN OMD.FORMA_ENTRADA IS NOT NULL                          THEN OMD.FORMA_ENTRADA
+                ELSE '-'   END ORIGEM_ATENDIMENTO,
+    --STATUS
+            CASE    WHEN SALESFORCE.STATUS IS NOT NULL                          THEN SALESFORCE.STATUS
+                    WHEN PIPEFY.STATUS IS NOT NULL                              THEN PIPEFY.STATUS
+                ELSE '-'   END STATUS,
+    --CANAL
+            CASE    WHEN SALESFORCE.CANAL IS NOT NULL                           THEN SALESFORCE.CANAL
+                    WHEN PLUSOFT.CANAL IS NOT NULL                              THEN PLUSOFT.CANAL
+                ELSE '-'   END CANAL,
+    --DESCRICAO
+            OMD.DESCRICAO,
+    --RESULTADO
+            OMD.RESULTADO,
+    --FINALIZACAO
+            OMD.FINALIZACAO,
+    --SISTEMA
+            CASE    WHEN SALESFORCE.SISTEMA IS NOT NULL                         THEN SALESFORCE.SISTEMA
+                    WHEN OMD.SISTEMA IS NOT NULL                                THEN OMD.SISTEMA
+                    WHEN PLUSOFT.SISTEMA IS NOT NULL                            THEN PLUSOFT.SISTEMA
+                    WHEN PIPEFY.SISTEMA IS NOT NULL                             THEN PIPEFY.SISTEMA
+                ELSE NULL   END SISTEMA
+
+    FROM
+
+--------------------------------------------------------------------------------
+    --BASE SALESFORCE
+        --SELECT Count(*) FROM
+        (
+        SELECT
+            DATA_REF                                                                        AS DATA_INICIO,
+            (SUBSTR("DATA/HORA DE ABERTURA",15,2)*60) +
+                (SUBSTR("DATA/HORA DE ABERTURA",12,2)*60*60)                                AS HORA_INICIO,
+            SUBSTR("DATA/HORA DE FECHAMENTO",1,10)                                          AS DATA_FIM,
+            (SUBSTR("DATA/HORA DE FECHAMENTO",15,2)*60) +
+                (SUBSTR("DATA/HORA DE FECHAMENTO",12,2)*60*60)                              AS HORA_FIM,
+            UPPER(CEDENTE)                                                                  AS BU_CEDENTE,
+            CONTRATO,
+            "AGENTE RESPONSAVEL"                                                            AS AGENTE_RESPONSAVEL,
+            "COD AGENTE RESPONSAVEL"                                                        AS AGENTE_CODIGO,
+            "NUMERO DO PROTOCOLO"                                                           AS PROTOCOLO,
+            CASE    WHEN "NOME DA CONTA CPF" IS NOT NULL    THEN REPLACE(REPLACE("NOME DA CONTA CPF",'-',''),'.','')
+                    WHEN CPF IS NOT NULL                    THEN REPLACE(REPLACE(CPF,'-',''),'.','')
+                ELSE NULL   END CPF,
+            "NAO CLIENTE"                                                                   AS NAO_CLIENTE,
+            UPPER(CENTRAL)                                                                  AS CENTRAL,
+            UPPER("PROPRIETARIO PROTOCOLO")                                                 AS PROPRIETARIO_PROTOCOLO,
+            UPPER("CRIADO POR")                                                             AS CRIADO_POR,
+            UPPER("FECHADO PELO USUARIO")                                                   AS FECHADO_POR,
+            UPPER(TIPO)                                                                     AS TIPO,
+            UPPER(MOTIVO)                                                                   AS MOTIVO,
+            UPPER("SUB-MOTIVO")                                                             AS SUBMOTIVO,
+            CASE    WHEN PRODUTO IS NULL                            THEN '-'
+                    WHEN PRODUTO IS NOT NULL                        THEN UPPER(PRODUTO)
+                ELSE '-'    END PRODUTO,
+            CASE    WHEN "PRODUTO DO CONTRATO" IS NULL              THEN '-'
+                    WHEN "PRODUTO DO CONTRATO" IS NOT NULL          THEN UPPER("PRODUTO DO CONTRATO")
+                ELSE '-'    END PRODUTO_CONTRATO,
+            UPPER("ORIGEM DO PROTOCOLO")                                                    AS ORIGEM_ATENDIMENTO,
+            STATUS,
+            CANAL,
+            CASE    WHEN "NUMERO DO PROTOCOLO" IS NOT NULL      THEN 'SALESFORCE'       ELSE NULL       END SISTEMA
+
+        FROM TB_SALESFORCE_TODAS_CENTRAIS) SALESFORCE
+
+--------------------------------------------------------------------------------
+        FULL JOIN
+--------------------------------------------------------------------------------
+    --BASE OMD
+        --SELECT Count(*) FROM
+        (
+        SELECT
+            TO_CHAR(TO_DATE(OMD.DATA_REF, 'DD/MM/YY'), 'DD/MM/YYYY')                            AS DATA_INICIO,
+            TO_CHAR(TO_DATE(OMD.PRAZO_MANIFESTACAO, 'DD/MM/YY'), 'DD/MM/YYYY')                  AS DATA_PRAZO_CONCLUSAO,
+            TO_CHAR(TO_DATE(OMD.PRAZO_CONCLUSAO, 'DD/MM/YY'), 'DD/MM/YYYY')                     AS DATA_CONCLUSAO,
+            UPPER(OMD.FORMA_ENTRADA)                                                            AS FORMA_ENTRADA,
+            UPPER(OMD.MANIFESTANTE)                                                             AS MANIFESTANTE,
+            UPPER(OMD.CLASSIFICACAO)                                                            AS CLASSIFICACAO,
+            OMD.COD_MANIFESTACAO                                                                AS PROTOCOLO,
+            CLI.CONTRATO                                                                        AS CONTRATO,
+            UPPER(OMD.PRODUTOS)                                                                 AS PRODUTO,
+            UPPER(OMD.ASSUNTOS)                                                                 AS MOTIVO,
+            TO_CHAR(OMD.DESCRICAO)                                                              AS DESCRICAO,
+            UPPER(OMD.NOME)                                                                     AS NOME,
+
+            CASE    WHEN OMD.CPF <> '-'             THEN REPLACE(REPLACE(OMD.CPF,'-',''),'.','')
+                    WHEN OMD.CNPJ <> '-'            THEN REPLACE(REPLACE(OMD.CNPJ,'-',''),'.','')
+            ELSE NULL   END CPF_CNPJ,
+            UPPER(OMD.UNIDADE_OCORRENCIA)                                                       AS UNIDADE_OCORRENCIA,
+            OMD.RESULTADO,
+            OMD.FINALIZACAO,
+            UPPER(OMD.CANAL)                                                                    AS CANAL,
+            UPPER(OMD.ANALISTA)                                                                 AS ANALISTA,
+            CASE    WHEN OMD.COD_MANIFESTACAO IS NOT NULL   THEN 'OMD'
+                ELSE NULL   END SISTEMA
+
+        FROM TB_OMD_GERAL OMD
+
+        LEFT JOIN
+        (SELECT CLI_2.CPF_CGC, MAX(CTT.CONTRATO) CONTRATO FROM CLIENTES@DW CLI_2
+        LEFT JOIN CONTRATOS@DW CTT
+          ON CLI_2.CODIGO = CTT.CLIENTE
+        GROUP BY CLI_2.CPF_CGC) CLI
+          ON REPLACE(REPLACE(OMD.CPF, '-',''), '.','') = CLI.CPF_CGC
+        )  OMD
+
+--------------------------------------------------------------------------------
+          ON SALESFORCE.PROTOCOLO = OMD.PROTOCOLO
+--------------------------------------------------------------------------------
+        FULL JOIN
+--------------------------------------------------------------------------------
+    --BASE PLUSOFT
+        --SELECT Count(*) FROM
+        (
+        SELECT
+            "Número do atendimento"                                                         AS PROTOCOLO,
+            "CPF/CNPJ"                                                                      AS CPF_CNPJ,
+            "COD_INTERNO_OCORRENCIA"                                                        AS PROTOCOLO_INTERNO,
+            SUBSTR("DATA_REGISTRO_OCORRENCIA",1,10)                                         AS DATA_INICIO,
+            SUBSTR("DATA_REGISTRO_OCORRENCIA",12,2)*60*60 +
+                SUBSTR("DATA_REGISTRO_OCORRENCIA",15,2)*60                                  AS HORA_INICIO,
+            SUBSTR("DATA_PREVISAO_OCORRENCIA",1,10)                                         AS DATA_PRAZO_CONCLUSAO,
+            SUBSTR("DATA_PREVISAO_OCORRENCIA",12,2)*60*60 +
+                SUBSTR("DATA_PREVISAO_OCORRENCIA",15,2)*60                                  AS HORA_PRAZO_CONCLUSAO,
+            SUBSTR("DATA_CONCLUSAO",1,10)                                                   AS DATA_CONCLUSAO,
+            SUBSTR("DATA_CONCLUSAO",12,2)*60*60 +
+                SUBSTR("DATA_CONCLUSAO",15,2)*60                                            AS HORA_CONCLUSAO,
+            UPPER("Categoria de assunto")                                                   AS PRODUTO,
+            UPPER("Forma de contato")                                                       AS CANAL,
+            UPPER("Grupo de assunto")                                                       AS CENTRAL,
+            UPPER("Assunto")                                                                AS PRODUTO_CONTRATO,
+            UPPER("Tipo de ocorrência")                                                     AS TIPO,
+            UPPER("Grupo de tipo de ocorrência")                                            AS MOTIVO,
+            UPPER("Ocorrência")                                                             AS SUBMOTIVO,
+            UPPER("Nome do atendente")                                                      AS CRIADO_POR,
+            UPPER("Time")                                                                   AS ATENDIMENTO,
+            UPPER("USR_ENCERRAMENTO_OCO")                                                   AS FINALIZADO_POR,
+            CASE    WHEN "Número do atendimento"   IS NOT NULL      THEN 'PLUSOFT'
+                ELSE NULL   END SISTEMA
+
+        FROM TB_PLUSOFT_TRIGG ) PLUSOFT
+--------------------------------------------------------------------------------
+          ON SALESFORCE.PROTOCOLO = PLUSOFT.PROTOCOLO
+--------------------------------------------------------------------------------
+        FULL JOIN
+--------------------------------------------------------------------------------
+    --BASE PIPEFY
+        --SELECT Count(*) FROM
+        (
+        SELECT DISTINCT
+            PROTOCOLO,
+            SUBSTR(DATA_HR_INI,1,10)                    AS DATA_INI,
+            SUBSTR(DATA_HR_INI,12,2)*60*60 +
+                SUBSTR(DATA_HR_INI,15,2)*60 +
+                    SUBSTR(DATA_HR_INI,18,2)            AS HR_INI,
+            SUBSTR(DATA_HR_FIM,1,10)                    AS DATA_FIM,
+            SUBSTR(DATA_HR_FIM,12,2)*60*60 +
+                SUBSTR(DATA_HR_FIM,15,2)*60 +
+                    SUBSTR(DATA_HR_FIM,18,2)            AS HR_FIM,
+            REPLACE(REPLACE(CPF, '-',''), '.','')       AS CPF  ,
+            UPPER (OPERADOR)                            AS OPERADOR,
+            UPPER (STATUS)                              AS STATUS,
+            UPPER (PRODUTO)                             AS PRODUTO,
+            UPPER (MOTIVO)                              AS MOTIVO,
+            UPPER (TIPO)                                AS TIPO,
+            CASE WHEN PROTOCOLO IS NOT NULL   THEN 'PIPEFY' ELSE NULL END SISTEMA
+
+        FROM TB_PIPEFY_UZE ) PIPEFY
+
+--------------------------------------------------------------------------------
+          ON SALESFORCE.PROTOCOLO = PIPEFY.PROTOCOLO
+    ) BS_SISTEMAS
+--------------------------------------------------------------------------------
+    LEFT JOIN
+--------------------------------------------------------------------------------
+    --BASE TB_VISAO_CHAT
+        (
+        SELECT
+            DATA,
+            PROTOCOLO,
+            PROPRIETARIO,
+            SERVICO,
+            TIPO,
+            MOTIVO,
+            SUBMOTIVO,
+            TME,
+            TMCHAT,
+            ABANDONO,
+            HORA_INICIO,
+            HORA_FIM
+        FROM TB_VISAO_CHAT ) CHAT
+--------------------------------------------------------------------------------
+  ON BS_SISTEMAS.PROTOCOLO = CHAT.PROTOCOLO AND BS_SISTEMAS.SISTEMA = 'SALESFORCE'
+--------------------------------------------------------------------------------
+    LEFT JOIN
+--------------------------------------------------------------------------------
+    --BASE TB_PESQ_CHAT_2022
+        (
+        SELECT
+            DATA,
+            CONTRATO,
+            PROTOCOLO,
+            CPF,
+            PROPRIETARIO,
+            PRODUTO_CONTRATO,
+            CENTRAL,
+            PRODUTO,
+            CSAT,
+            NPS,
+            PESQ_ATEND
+        FROM TB_PESQ_CHAT_2022 ) PESQ_CHAT
+--------------------------------------------------------------------------------
+  ON BS_SISTEMAS.PROTOCOLO = PESQ_CHAT.PROTOCOLO
+--------------------------------------------------------------------------------
+    LEFT JOIN
+--------------------------------------------------------------------------------
+    --BASE TB_NPS_2N
+        (
+        SELECT
+            PROTOCOLO,
+            CONTRATO,
+            CRIADO_POR_NOME,
+            CENTRAL,
+            PRODUTO,
+            PRODUTO_CONTRATO,
+            CEDENTE,
+            COMENTARIO,
+            NOTA_NPS,
+            DATA_REF,
+            TIPO,
+            MOTIVO,
+            SUBMOTIVO,
+            NPS,
+            ATENDIMENTO
+        FROM TB_NPS_2N ) PESQ_NPS_2N
+--------------------------------------------------------------------------------
+  ON BS_SISTEMAS.PROTOCOLO = PESQ_NPS_2N.PROTOCOLO
+--------------------------------------------------------------------------------
+    LEFT JOIN
+--------------------------------------------------------------------------------
+    --BASE TB_NPS_EMAIL
+        (
+        SELECT
+            PROTOCOLO,
+            CRIADO_POR_NOME,
+            CENTRAL,
+            PRODUTO,
+            PRODUTO_CONTRATO,
+            COMENTARIO,
+            NOTA_NPS,
+            DATA_REF,
+            MOTIVO,
+            SUBMOTIVO,
+            NPS,
+            ATENDIMENTO
+        FROM TB_NPS_EMAIL ) PESQ_NPS_EMAIL
+--------------------------------------------------------------------------------
+  ON BS_SISTEMAS.PROTOCOLO = PESQ_NPS_EMAIL.PROTOCOLO
+--------------------------------------------------------------------------------
+    LEFT JOIN
+--------------------------------------------------------------------------------
+    --BASE TB_CES_2N
+        (
+        SELECT
+            PROTOCOLO,
+            CONTRATO,
+            NOTA_CES,
+            CRIADO_POR,
+            NAO_CLIENTE,
+            ORIGEM_PROTOCOLO,
+            CENTRAL,
+            PRODUTO,
+            PRODUTO_CONTRATO,
+            CEDENTE,
+            COMENTARIO,
+            DATA,
+            HORA,
+            TIPO,
+            MOTIVO,
+            SUBMOTIVO,
+            OPERACAO
+        FROM TB_CES_2N ) PESQ_CES_2N
+--------------------------------------------------------------------------------
+  ON BS_SISTEMAS.PROTOCOLO = PESQ_CES_2N.PROTOCOLO
+--------------------------------------------------------------------------------
+    LEFT JOIN
+--------------------------------------------------------------------------------
+    --BASE TB_CSAT_2N
+        (
+        SELECT
+            DATA,
+            HORA,
+            PROTOCOLO,
+            CONTRATO,
+            CRIADO_POR,
+            MODIFICADO_POR,
+            NOTA_CSAT,
+            CENTRAL,
+            PRODUTO,
+            CEDENTE,
+            COMENTARIO,
+            TIPO,
+            MOTIVO,
+            SUBMOTIVO,
+            OPERACAO
+        FROM TB_CSAT_2N ) PESQ_CSAT_2N
+--------------------------------------------------------------------------------
+  ON BS_SISTEMAS.PROTOCOLO = PESQ_CSAT_2N.PROTOCOLO
+--------------------------------------------------------------------------------
+            )  GERAL
+    
+    LEFT JOIN (
+        SELECT 
+            CTT.CONTRATO, 
+            CTT.CLIENTE,
+            CLI.CPF_CGC,
+            BU.DESCRICAO        
+        FROM CONTRATOS@DW CTT
+            LEFT JOIN CLIENTES@DW CLI
+                ON CTT.CLIENTE = CLI.CODIGO
+            LEFT JOIN OPERACOES@DW OP
+                ON CTT.OPERACAO = OP.CODIGO
+            LEFT JOIN BU@DW BU
+                ON OP.BU = BU.CODIGO ) BU
+        ON GERAL.CPF_CNPJ = BU.CPF_CGC
+
+      LEFT JOIN APOIO_CEDENTE BU_C
+        ON GERAL.BU_CEDENTE = BU_C.CEDENTE
+
+      LEFT JOIN APOIO_PRODUTO BU_P
+        ON GERAL.PRODUTO = BU_P.PRODUTO AND GERAL.PRODUTO_CONTRATO = BU_P.PRODUTO_CONTRATO )
